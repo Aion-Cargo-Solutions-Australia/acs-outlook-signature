@@ -34,13 +34,24 @@ function imgTag(img, src) {
 
 function row(cfg, label, valueHtml) {
   const c = cfg.colors;
+  const s = cfg.fontSizes;
   return (
     "<tr>" +
-    '<td width="54" style="width:54px;padding:1px 10px 1px 0;font-family:' + cfg.fontFamily + ";font-size:11px;line-height:18px;font-weight:bold;color:" + c.label +
-    ';white-space:nowrap;vertical-align:top;">' + escapeHtml(label) + "</td>" +
-    '<td style="padding:1px 0;font-family:' + cfg.fontFamily + ";font-size:12px;line-height:18px;color:" + c.value + ';white-space:nowrap;vertical-align:top;">' +
-    valueHtml + "</td>" +
+    '<td width="44" style="width:44px;padding:0 8px 0 0;font-family:' + cfg.fontFamily + ";font-size:" + s.label + "px;line-height:" + s.rowLine +
+    "px;font-weight:bold;color:" + c.label + ';white-space:nowrap;vertical-align:top;">' + escapeHtml(label) + "</td>" +
+    '<td style="padding:0;font-family:' + cfg.fontFamily + ";font-size:" + s.row + "px;line-height:" + s.rowLine + "px;color:" + c.value +
+    ';white-space:nowrap;vertical-align:top;">' + valueHtml + "</td>" +
     "</tr>"
+  );
+}
+
+/** 一行免责声明（完整签名与精简签名共用同一段文字） */
+function disclaimerHtml(cfg) {
+  const co = cfg.company;
+  if (!co.termsUrl && !co.disclaimerPrefix) return "";
+  return (
+    escapeHtml(co.disclaimerPrefix || "") + (co.disclaimerPrefix ? " " : "") +
+    (co.termsUrl ? link(cfg, co.termsUrl, co.termsText || co.termsUrl, cfg.colors.footer, true) : "") + "."
   );
 }
 
@@ -86,44 +97,80 @@ export function buildFullSignature(p, cfg, imageSrc) {
   // 地址统一使用公司地址（不读个人资料里的地址，旧版本缓存里可能存有员工住址）
   if (co.address) rows.push(row(cfg, L.address, co.addressUrl ? link(cfg, co.addressUrl, co.address, c.value) : plain(co.address)));
 
+  const s = cfg.fontSizes;
   const logo = cfg.images.logo;
   const badge = cfg.images.badge;
-  const hasDisclaimer = !!(co.termsUrl || co.disclaimerPrefix);
+  const mark = cfg.images.mark;
+  const corner = cfg.images.markCorner;
+  const disclaimer = disclaimerHtml(cfg);
+  const hasDisclaimer = !!disclaimer;
 
   let html = '<div id="acs-signature" data-acs-sig="full">';
   html += signOffHtml(cfg);
   html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">';
   html += "<tr>";
 
-  // 左列：Logo，高度与右侧信息块一致，垂直居中
+  // 左列：Logo，垂直居中
   if (logo) {
-    html += '<td width="' + logo.width + '" valign="middle" style="padding:0 20px 0 0;vertical-align:middle;">' + imgTag(logo, imageSrc("logo")) + "</td>";
+    html += '<td width="' + logo.width + '" valign="middle" style="padding:0 14px 0 0;vertical-align:middle;">' + imgTag(logo, imageSrc("logo")) + "</td>";
   }
 
   // 右列：姓名 / 职位 / 联系方式
-  html += '<td valign="middle" style="border-left:2px solid ' + c.divider + ';padding:2px 0 2px 20px;vertical-align:middle;">';
-  html += '<div style="font-family:' + f + ";font-size:20px;line-height:24px;font-weight:bold;color:" + c.text + ';">' + plain(p.displayName) + "</div>";
-  if (cfg.showTitleInFull && p.jobTitle) {
-    html += '<div style="font-family:' + f + ";font-size:12px;line-height:18px;color:" + c.muted + ';padding:1px 0 0 0;">' + plain(p.jobTitle) + "</div>";
+  html += '<td valign="middle" style="border-left:2px solid ' + c.divider + ';padding:2px 0 2px 14px;vertical-align:middle;">';
+  const nameHtml = '<div style="font-family:' + f + ";font-size:" + s.name + "px;line-height:" + (s.name + 4) + "px;font-weight:bold;color:" + c.text + ';">' + plain(p.displayName) + "</div>";
+  if (mark && cfg.markPosition === "name") {
+    // 品牌圆环放在姓名同一行的最右侧
+    html += '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>' +
+      '<td valign="middle" style="vertical-align:middle;">' + nameHtml + "</td>" +
+      '<td align="right" valign="middle" style="padding:0 0 0 16px;text-align:right;vertical-align:middle;">' + imgTag(mark, imageSrc("mark")) + "</td>" +
+      "</tr></table>";
+  } else {
+    html += nameHtml;
   }
-  html += '<div style="height:10px;line-height:10px;font-size:1px;">&nbsp;</div>';
-  html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">' + rows.join("") + "</table>";
+  if (cfg.showTitleInFull && p.jobTitle) {
+    html += '<div style="font-family:' + f + ";font-size:" + s.title + "px;line-height:" + (s.title + 4) + "px;color:" + c.muted + ';padding:1px 0 0 0;">' +
+      plain(p.jobTitle) + "</div>";
+  }
+  html += '<div style="height:7px;line-height:7px;font-size:1px;">&nbsp;</div>';
+  const rowsHtml = '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">' + rows.join("") + "</table>";
+  if (corner && cfg.markPosition === "overlay") {
+    // 淡化的 1/4 圆环压在地址那一行的文字后面（z-index:-1 → 在文字下层）。
+    // 经典 Outlook（Word 引擎）不支持定位，用 mso-hide:all 直接隐藏，避免图片掉到文字下面破版。
+    const o = cfg.markOverlayOffset || { right: 24, bottom: 0 };
+    // 图片先画、文字表格后画（两者都是定位元素，按文档顺序叠放）→ 文字始终在圆环上层
+    html += '<div style="position:relative;">' +
+      '<img src="' + escapeHtml(imageSrc("markCorner")) + '" width="' + corner.width + '" height="' + corner.height + '" alt="" ' +
+      'style="position:absolute;right:' + o.right + "px;bottom:" + o.bottom + "px;width:" + corner.width + "px;height:" + corner.height +
+      'px;border:0;outline:none;mso-hide:all;" />' +
+      rowsHtml.replace("border-collapse:collapse;", "border-collapse:collapse;position:relative;") +
+      "</div>";
+  } else if (corner && cfg.markPosition === "corner") {
+    // 不重叠的版本：联系方式右侧单独一格（所有邮件客户端都支持）
+    html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>' +
+      '<td valign="bottom" style="vertical-align:bottom;">' + rowsHtml + "</td>" +
+      '<td width="' + corner.width + '" align="right" valign="bottom" style="padding:0 0 2px 10px;text-align:right;vertical-align:bottom;">' +
+      imgTag(corner, imageSrc("markCorner")) + "</td></tr></table>";
+  } else {
+    html += rowsHtml;
+  }
   html += "</td></tr>";
 
-  // 底部（跨两列，与上方同宽）：细分隔线 + WCA 徽章 + 一行免责声明
-  if (hasDisclaimer || badge) {
-    html += '<tr><td colspan="' + (logo ? 2 : 1) + '" style="padding:14px 0 0 0;">';
+  // 底部（跨两列，与上方同宽）：细分隔线 + WCA 徽章 + 一行免责声明 +（可选）品牌圆环
+  const markInFooter = mark && cfg.markPosition === "footer";
+  if (hasDisclaimer || badge || markInFooter) {
+    html += '<tr><td colspan="' + (logo ? 2 : 1) + '" style="padding:11px 0 0 0;">';
     html += '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>';
-    html += '<td style="border-top:1px solid ' + c.hairline + ';padding:10px 0 0 0;">';
-    html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>';
+    html += '<td style="border-top:1px solid ' + c.hairline + ';padding:8px 0 0 0;">';
+    html += '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>';
     if (badge) {
-      html += '<td valign="middle" style="padding:0 14px 0 0;vertical-align:middle;">' + imgTag(badge, imageSrc("badge")) + "</td>";
+      html += '<td width="' + badge.width + '" valign="middle" style="padding:0 12px 0 0;vertical-align:middle;">' + imgTag(badge, imageSrc("badge")) + "</td>";
     }
     if (hasDisclaimer) {
-      html += '<td valign="middle" style="font-family:' + f + ";font-size:10.5px;line-height:15px;color:" + c.footer + ';vertical-align:middle;">';
-      html += plain(co.disclaimerPrefix || "") + (co.disclaimerPrefix ? " " : "");
-      html += co.termsUrl ? link(cfg, co.termsUrl, co.termsText || co.termsUrl, c.footer, true) : "";
-      html += ".</td>";
+      html += '<td valign="middle" style="font-family:' + f + ";font-size:" + s.footer + "px;line-height:" + (s.footer + 4) + "px;color:" + c.footer +
+        ';vertical-align:middle;">' + disclaimer + "</td>";
+    }
+    if (markInFooter) {
+      html += '<td width="' + mark.width + '" align="right" valign="middle" style="padding:0 0 0 16px;text-align:right;vertical-align:middle;">' + imgTag(mark, imageSrc("mark")) + "</td>";
     }
     html += "</tr></table></td></tr></table></td></tr>";
   }
@@ -132,9 +179,11 @@ export function buildFullSignature(p, cfg, imageSrc) {
 }
 
 /**
- * 精简签名：无图片，三行。用于同一邮件会话中本人第二次及以后的回复。
+ * 精简签名：三行 + 底部一行小字免责声明。用于同一会话中本人第二次及以后的回复。
+ * markInShort=true 时，淡化的 1/4 圆环会压在网址那一行附近（经典 Outlook 自动隐藏）。
+ * @param {(key:string)=>string} [imageSrc] 圆环图片地址；不传则不显示圆环
  */
-export function buildShortSignature(p, cfg) {
+export function buildShortSignature(p, cfg, imageSrc) {
   const c = cfg.colors;
   const f = cfg.fontFamily;
   const co = cfg.company;
@@ -154,11 +203,26 @@ export function buildShortSignature(p, cfg) {
   if (p.phone) parts.push('<b style="color:' + c.label + ';">' + escapeHtml(L.phone) + "</b>&nbsp;" + escapeHtml(p.phone) + (p.ext ? "&nbsp;&nbsp;" + extHtml(cfg, p.ext) : ""));
   if (co.website) parts.push(link(cfg, co.websiteUrl || "https://" + co.website, co.website));
 
+  const corner = cfg.images.markCorner;
+  const showMark = !!(imageSrc && corner && cfg.markInShort);
+  const o = cfg.markShortOffset || { right: 0, bottom: 14 };
+
   let html = '<div id="acs-signature" data-acs-sig="short">';
   if (cfg.signOffInShort) html += signOffHtml(cfg);
   html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>';
   html += '<td style="border-left:3px solid ' + c.accent + ';padding:1px 0 1px 10px;font-family:' + f + ";font-size:12px;line-height:19px;color:" + c.muted + ';">';
+  // 圆环先画、文字后画 → 文字在上层
+  if (showMark) {
+    html += '<div style="position:relative;"><img src="' + escapeHtml(imageSrc("markCorner")) + '" width="' + corner.width + '" height="' +
+      corner.height + '" alt="" style="position:absolute;right:' + o.right + "px;bottom:" + o.bottom + "px;width:" + corner.width +
+      "px;height:" + corner.height + 'px;border:0;outline:none;mso-hide:all;" /><div style="position:relative;">';
+  }
   html += line1 + "<br/>" + line2 + "<br/>" + parts.join(sep);
+  const disclaimer = disclaimerHtml(cfg);
+  if (disclaimer) {
+    html += '<div style="padding:6px 0 0 0;font-size:10px;line-height:14px;color:' + c.footer + ';">' + disclaimer + "</div>";
+  }
+  if (showMark) html += "</div></div>";
   html += "</td></tr></table></div>";
   return html;
 }

@@ -14,7 +14,7 @@ const me = {
 const p = normalizeProfile(me, CFG, {});
 const dataUri = (k) => "data:image/png;base64," + fs.readFileSync(path.join(root, "src/assets", CFG.images[k].file)).toString("base64");
 const full = buildFullSignature(p, CFG, dataUri);
-const short = buildShortSignature(p, CFG);
+const short = buildShortSignature(p, CFG, dataUri);
 
 const quoted = (inner) =>
   '<div style="border-top:1px solid #e1e1e1;margin-top:18px;padding-top:10px;font:12px Arial;color:#555;"><b>From:</b> John Smith &lt;john@client.com&gt;<br/><b>Sent:</b> Friday, 18 September 2026 3:12 PM<br/><b>Subject:</b> RE: Shipment quote SYD → SIN</div>' + (inner || "");

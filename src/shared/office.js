@@ -134,10 +134,20 @@ export function imageSrcFactory(mode) {
   };
 }
 
+/** 当前变体真正会用到的内嵌图片 */
+export function imageKeysFor(variant) {
+  const pos = CFG.markPosition;
+  if (variant === "short") return CFG.markInShort && CFG.images.markCorner ? ["markCorner"] : [];
+  const used = (k) =>
+    k === "mark" ? pos === "footer" || pos === "name" : k === "markCorner" ? pos === "overlay" || pos === "corner" : true;
+  return Object.keys(IMAGES).filter((k) => CFG.images[k] && used(k));
+}
+
 export function buildHtml(variant, profile, mode) {
+  const src = imageSrcFactory(mode || CFG.imageMode);
   return variant === "short"
-    ? buildShortSignature(profile, CFG)
-    : buildFullSignature(profile, CFG, imageSrcFactory(mode || CFG.imageMode));
+    ? buildShortSignature(profile, CFG, CFG.markInShort ? src : null)
+    : buildFullSignature(profile, CFG, src);
 }
 
 /** 把签名写入当前撰写的邮件 */
@@ -152,9 +162,9 @@ export async function applySignature(variant, profile) {
     }
   }
   const mode = CFG.imageMode;
-  if (variant === "full" && mode === "embed") {
-    const keys = Object.keys(IMAGES).filter((k) => CFG.images[k]);
-    for (const k of keys) {
+  if (mode === "embed") {
+    // 只内嵌当前变体真正会用到的图片
+    for (const k of imageKeysFor(variant)) {
       try {
         await addInlineImage(k);
       } catch (e) {

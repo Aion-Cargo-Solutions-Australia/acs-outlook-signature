@@ -48,7 +48,7 @@ test("new message → full signature with embedded images", async () => {
   const { calls } = await run({ composeType: "newMail" });
   assert.ok(calls.disabled);
   assert.match(calls.signature, /data-acs-sig="full"/);
-  assert.deepEqual(calls.attachments, ["acs-logo.png", "wca-badge.png"]);
+  assert.deepEqual(calls.attachments, ["acs-logo.png", "wca-badge.png", "acs-mark-corner.png"]);
   assert.match(calls.signature, /cid:acs-logo\.png/);
 });
 
@@ -58,10 +58,10 @@ test("first reply (never sent in conversation) → full", async () => {
   assert.equal(mock.checkedConv, "AAQkConv+/=");
 });
 
-test("later reply (already sent) → short, no images", async () => {
+test("later reply (already sent) → short, only the faded mark is embedded", async () => {
   const { calls } = await run({ composeType: "reply", sent: true });
   assert.match(calls.signature, /data-acs-sig="short"/);
-  assert.equal(calls.attachments.length, 0);
+  assert.deepEqual(calls.attachments, ["acs-mark-corner.png"]);
 });
 
 test("forward → full (forwardAlwaysFull)", async () => {

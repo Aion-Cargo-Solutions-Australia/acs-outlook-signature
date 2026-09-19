@@ -49,10 +49,36 @@ export const SIGNATURE_CONFIG = {
   images: {
     // 文件放在 src/assets/ 下；width/height 是显示尺寸（源图为 2 倍分辨率，透明背景 + 白色描边以适配暗色模式）
     // Logo 高度与右侧姓名 + 联系方式信息块一致
-    logo: { file: "acs-logo.png", width: 248, height: 150, alt: "ACS - Aion Cargo Solutions" },
-    badge: { file: "wca-badge.png", width: 90, height: 60, alt: "WCA Advanced Professionals" },
-    // 不需要底部徽章就设为 null
+    logo: { file: "acs-logo.png", width: 198, height: 120, alt: "ACS - Aion Cargo Solutions" },
+    badge: { file: "wca-badge.png", width: 78, height: 52, alt: "WCA Advanced Professionals" },
+    // ACS 品牌圆环标志：完整圆环（footer / name 位置用）
+    mark: { file: "acs-mark.png", width: 40, height: 38, alt: "" },
+    // 淡化的 1/4 圆环（带箭头那一段），放在联系方式右下角做背景装饰
+    markCorner: { file: "acs-mark-corner.png", width: 48, height: 45, alt: "" },
+    // 不需要底部徽章 / 圆环就设为 null
   },
+
+  /**
+   * 品牌圆环标志的位置（完整签名）：
+   *  - "overlay"：淡化的 1/4 圆环压在地址那行文字后面（推荐）。
+   *               新版 Outlook / 网页版 Outlook / Gmail / Apple Mail 正常显示；
+   *               经典 Outlook（Word 引擎）不支持定位，会自动隐藏圆环，其余部分不受影响。
+   *  - "corner" ：同样的圆环，但放在联系方式右侧单独一格、不与文字重叠（所有客户端都显示）
+   *  - "footer" ：底部分隔线右端的完整圆环
+   *  - "name"   ：姓名这一行最右侧的完整圆环
+   *  - "none"   ：不显示
+   * 精简签名不放图片（每封回复都会多一个内嵌附件），所以圆环只出现在完整签名里。
+   */
+  markPosition: "overlay",
+  // overlay 位置微调：距联系方式区域右边 / 下边多少像素（right:0 = 圆环右边缘与地址末尾 "2009" 对齐）
+  markOverlayOffset: { right: 0, bottom: -2 },
+
+  // 精简签名里也放这个淡化圆环（网址那一行附近）。代价：每封回复多一个 ~4KB 的内嵌图片
+  markInShort: true,
+  markShortOffset: { right: 0, bottom: 16 },
+
+  // 字号（px）—— 想整体再紧凑或再大一点，改这里就行
+  fontSizes: { name: 17, title: 11, row: 11, label: 10, rowLine: 16, footer: 9.5 },
 
   /**
    * 回复 / 转发规则：

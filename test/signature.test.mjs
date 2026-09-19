@@ -36,7 +36,7 @@ test("normalizeProfile: graph data, ext attribute and fallbacks", () => {
 
 test("full signature contains all rows, images with explicit size, no <style>/svg", () => {
   const html = buildFullSignature(normalizeProfile(me, CFG, {}), CFG, src);
-  for (const s of ["Ivy Hu", "+61 425 666 802", "Ext.</span>&nbsp;601", "mailto:ivy.hu@aioncargo.com", "www.aioncargo.com", "Pyrmont", "cid:logo.png", "cid:badge.png", 'width="248" height="150"', "Kind regards,", ">Mobile<", ">Tel<", ">Email<", ">Web<", ">Address<"]) {
+  for (const s of ["Ivy Hu", "+61 425 666 802", "Ext.</span>&nbsp;601", "mailto:ivy.hu@aioncargo.com", "www.aioncargo.com", "Pyrmont", "cid:logo.png", "cid:badge.png", "cid:markCorner.png", 'width="198" height="120"', "Kind regards,", ">Mobile<", ">Tel<", ">Email<", ">Web<", ">Address<"]) {
     assert.ok(html.includes(s), "missing " + s);
   }
   assert.ok(!/<style|<svg|class=/i.test(html));
@@ -72,10 +72,19 @@ test("full signature omits empty rows", () => {
   assert.ok(html.includes(">Tel<") && html.includes("+61 2 9160 2300")); // falls back to main phone
 });
 
-test("short signature: no images, has name/title/phones", () => {
-  const html = buildShortSignature(normalizeProfile(me, CFG, {}), CFG);
-  assert.ok(!/<img/i.test(html));
+test("short signature: has name/title/phones, only the faded mark as image", () => {
+  const html = buildShortSignature(normalizeProfile(me, CFG, {}), CFG, src);
+  assert.equal((html.match(/<img/gi) || []).length, 1);
+  assert.ok(html.includes("cid:markCorner.png") && html.includes("mso-hide:all"));
+  assert.ok(!/<img/i.test(buildShortSignature(normalizeProfile(me, CFG, {}), CFG))); // 不传 imageSrc → 纯文字
   for (const s of ["Ivy Hu", "Managing Director - Australia", "Mobile</b>&nbsp;+61 425 666 802", "Ext.</span>&nbsp;601", "Aion Cargo Solutions", "Suite 4.06, 55 Miller St, Pyrmont NSW 2009"]) assert.ok(html.includes(s), "missing " + s);
+});
+
+test("short signature carries the same one-line disclaimer, no images", () => {
+  const html = buildShortSignature(normalizeProfile(me, CFG, {}), CFG, src);
+  assert.ok(html.includes(CFG.company.disclaimerPrefix));
+  assert.ok(html.includes(CFG.company.termsUrl) && html.includes(escapeHtml(CFG.company.termsText)));
+  assert.ok(!/<br\s*\/?>\s*$/i.test(html));
 });
 
 test("HTML injection is escaped", () => {
