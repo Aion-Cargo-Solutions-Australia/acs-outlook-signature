@@ -1,0 +1,47 @@
+name: Build & deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+        env:
+          # 可选：在仓库 Settings → Secrets and variables → Actions → Variables 中设置，覆盖 addin.config.json
+          ADDIN_BASE_URL: ${{ vars.ADDIN_BASE_URL }}
+          ADDIN_CLIENT_ID: ${{ vars.ADDIN_CLIENT_ID }}
+          ADDIN_TENANT_ID: ${{ vars.ADDIN_TENANT_ID }}
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+          include-hidden-files: true
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

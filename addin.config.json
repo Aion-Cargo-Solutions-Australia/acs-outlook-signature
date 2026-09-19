@@ -1,0 +1,10 @@
+{
+  "_comment": "部署前必须修改：baseUrl（加载项托管地址，必须 HTTPS 且放在域名根目录）、clientId、tenantId。改完运行 npm run build。",
+  "baseUrl": "https://sig.breezefreight.com",
+  "clientId": "00000000-0000-0000-0000-000000000000",
+  "tenantId": "organizations",
+  "addinId": "7d1f3c2a-5b8e-4a61-9f0d-2c6e8b4a1d73",
+  "version": "1.0.0.0",
+  "providerName": "Aion Cargo Solutions",
+  "displayName": "ACS Email Signature"
+}

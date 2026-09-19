@@ -1,0 +1,21 @@
+{
+  "name": "acs-outlook-signature",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ACS unified Outlook signature add-in (event-based, NAA + Microsoft Graph)",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "preview": "node scripts/preview.mjs",
+    "test": "node --test test/*.test.mjs",
+    "validate": "office-addin-manifest validate dist/manifest.xml",
+    "serve": "npx http-server dist -S -p 3000"
+  },
+  "dependencies": {
+    "@azure/msal-browser": "^4.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "office-addin-manifest": "^2.0.0"
+  }
+}

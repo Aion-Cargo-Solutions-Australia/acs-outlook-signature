@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ACS Signature</title>
+  <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <link rel="stylesheet" href="taskpane.css" />
+</head>
+<body>
+  <header>
+    <img src="assets/icon-32.png" width="24" height="24" alt="" />
+    <h1>ACS Email Signature</h1>
+  </header>
+
+  <section id="status" class="card">
+    <div id="statusText">正在读取你的资料…</div>
+    <button id="btnSignIn" class="secondary" hidden>登录并授权</button>
+  </section>
+
+  <section class="card">
+    <h2>我的资料 <span class="hint">（来自 Entra ID，如需修改请联系 IT）</span></h2>
+    <table id="profileTable"></table>
+    <button id="btnRefresh" class="link">刷新资料</button>
+  </section>
+
+  <section class="card">
+    <h2>本邮件</h2>
+    <div id="decision" class="muted">—</div>
+    <div class="tabs">
+      <button data-variant="full" class="tab active">完整签名</button>
+      <button data-variant="short" class="tab">精简签名</button>
+    </div>
+    <div id="preview" class="preview"></div>
+    <button id="btnInsert" class="primary">插入 / 替换为此签名</button>
+    <div id="msg" class="muted"></div>
+  </section>
+
+  <footer class="muted">签名由 IT 统一管理，请不要在 Outlook 里另外设置个人签名。</footer>
+  <script type="text/javascript" src="taskpane.js"></script>
+</body>
+</html>

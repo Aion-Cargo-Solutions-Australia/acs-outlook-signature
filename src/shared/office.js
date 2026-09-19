@@ -1,0 +1,160 @@
+/* global Office */
+import { SIGNATURE_CONFIG as CFG } from "../config.js";
+import { IMAGES } from "../generated/images.js";
+import { ADDIN } from "../generated/addin.js";
+import { buildFullSignature, buildShortSignature } from "./signature.js";
+import { bodyHasOwnSignature, normalizeProfile } from "./profile.js";
+import { fetchMe, getToken, hasSentInConversation } from "./graph.js";
+import { readCachedProfile, isFresh, saveCachedProfile } from "./cache.js";
+
+function asPromise(fn) {
+  return new Promise((resolve, reject) => {
+    fn((r) => {
+      if (r.status === Office.AsyncResultStatus.Failed) reject(r.error);
+      else resolve(r.value);
+    });
+  });
+}
+
+function item() {
+  return Office.context.mailbox.item;
+}
+
+export function log() {
+  // 事件运行时里的 console.log 会写入 runtime log，便于排查
+  try {
+    console.log.apply(console, ["[ACS-SIG]"].concat(Array.prototype.slice.call(arguments)));
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+export async function getComposeType() {
+  const it = item();
+  if (!it.getComposeTypeAsync) return "newMail";
+  try {
+    const v = await asPromise((cb) => it.getComposeTypeAsync(cb));
+    return (v && v.composeType) || "newMail";
+  } catch (e) {
+    return "newMail";
+  }
+}
+
+export async function getBodyText() {
+  try {
+    return await asPromise((cb) => item().body.getAsync(Office.CoercionType.Text, cb));
+  } catch (e) {
+    return "";
+  }
+}
+
+function fallbackUser() {
+  const up = Office.context.mailbox.userProfile || {};
+  return { displayName: up.displayName, emailAddress: up.emailAddress };
+}
+
+/**
+ * 取得用户资料：优先 Graph（并写入缓存），失败则用缓存，最后用 Outlook 自带的姓名+邮箱。
+ * @returns {{profile, token, error}}
+ */
+export async function loadProfile(allowPopup) {
+  const cached = readCachedProfile();
+  let token = null;
+  let error = null;
+  try {
+    token = await getToken(!!allowPopup);
+  } catch (e) {
+    error = e;
+    log("token failed", e && e.message);
+  }
+
+  if (token && (!isFresh(cached) || allowPopup)) {
+    try {
+      const me = await fetchMe(token);
+      const profile = normalizeProfile(me, CFG, fallbackUser());
+      await saveCachedProfile(profile);
+      return { profile: profile, token: token, error: null };
+    } catch (e) {
+      error = e;
+      log("graph /me failed", e && e.message);
+    }
+  }
+  if (cached) return { profile: cached.profile, token: token, error: error };
+  return { profile: normalizeProfile(null, CFG, fallbackUser()), token: token, error: error };
+}
+
+/**
+ * 决定用完整签名还是精简签名。
+ * @returns {{variant:"full"|"short", reason:string, composeType:string}}
+ */
+export async function decideVariant(profile, token) {
+  const composeType = await getComposeType();
+  if (composeType === "newMail") return { variant: "full", reason: "new message", composeType: composeType };
+  if (composeType === "forward" && CFG.forwardAlwaysFull) return { variant: "full", reason: "forward", composeType: composeType };
+
+  const conversationId = item().conversationId;
+  if (token && conversationId) {
+    try {
+      if (await hasSentInConversation(token, conversationId)) {
+        return { variant: "short", reason: "already sent in this conversation (Graph)", composeType: composeType };
+      }
+    } catch (e) {
+      log("sent-items check failed", e && e.message);
+    }
+  }
+  const body = await getBodyText();
+  if (bodyHasOwnSignature(body, profile)) {
+    return { variant: "short", reason: "own signature found in quoted thread", composeType: composeType };
+  }
+  return { variant: "full", reason: "first reply in this conversation", composeType: composeType };
+}
+
+async function addInlineImage(key) {
+  const img = IMAGES[key];
+  if (!img) return;
+  await asPromise((cb) => item().addFileAttachmentFromBase64Async(img.base64, img.cid, { isInline: true }, cb));
+}
+
+export function imageSrcFactory(mode) {
+  return function (key) {
+    const img = IMAGES[key];
+    if (!img) return "";
+    return mode === "embed" ? "cid:" + img.cid : ADDIN.baseUrl + "/assets/" + img.file;
+  };
+}
+
+export function buildHtml(variant, profile, mode) {
+  return variant === "short"
+    ? buildShortSignature(profile, CFG)
+    : buildFullSignature(profile, CFG, imageSrcFactory(mode || CFG.imageMode));
+}
+
+/** 把签名写入当前撰写的邮件 */
+export async function applySignature(variant, profile) {
+  const it = item();
+  // 关闭 Outlook 客户端自己保存的签名，避免出现两份签名
+  if (it.disableClientSignatureAsync) {
+    try {
+      await asPromise((cb) => it.disableClientSignatureAsync(cb));
+    } catch (e) {
+      log("disableClientSignature failed", e && e.message);
+    }
+  }
+  const mode = CFG.imageMode;
+  if (variant === "full" && mode === "embed") {
+    const keys = Object.keys(IMAGES).filter((k) => CFG.images[k]);
+    for (const k of keys) {
+      try {
+        await addInlineImage(k);
+      } catch (e) {
+        log("inline image failed, fallback to link", k, e && e.message);
+        return applyHtml(buildHtml(variant, profile, "link"));
+      }
+    }
+  }
+  return applyHtml(buildHtml(variant, profile, mode));
+}
+
+function applyHtml(html) {
+  return asPromise((cb) => item().body.setSignatureAsync(html, { coercionType: Office.CoercionType.Html }, cb));
+}
