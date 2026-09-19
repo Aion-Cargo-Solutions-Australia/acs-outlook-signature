@@ -14,7 +14,7 @@ export const SIGNATURE_CONFIG = {
     // 点击地址时打开的地图链接（留空则地址不加链接）
     addressUrl: "https://maps.google.com/?q=Suite+4.06,+55+Miller+St,+Pyrmont+NSW+2009",
     // 保密声明 & 条款链接 —— 请替换为你们真实的地址
-    termsUrl: "https://www.aioncargo.com/terms",
+    termsUrl: "https://www.aioncargo.co.nz/au-tc/",
     termsText: "Confidentiality Statement & Terms Conditions",
     disclaimer: "This email is subject to our confidentiality provisions and T&C -- available here:",
   },
