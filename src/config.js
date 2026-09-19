@@ -43,10 +43,14 @@ export const SIGNATURE_CONFIG = {
    */
   imageMode: "embed",
 
+  // 联系方式标签。注意："Email" 这一行也用于识别引用邮件里是否已有本人签名（profile.js bodyHasOwnSignature）
+  labels: { mobile: "Mobile", phone: "Tel", email: "Email", web: "Web", address: "Address" },
+
   images: {
-    // 文件放在 src/assets/ 下；width/height 是显示尺寸（源图建议为 2 倍分辨率）
-    logo: { file: "acs-logo.png", width: 124, height: 77, alt: "ACS - Aion Cargo Solutions" },
-    badge: { file: "wca-badge.png", width: 70, height: 51, alt: "WCA Advanced Professionals" },
+    // 文件放在 src/assets/ 下；width/height 是显示尺寸（源图为 2 倍分辨率，透明背景 + 白色描边以适配暗色模式）
+    // Logo 高度与右侧姓名 + 联系方式信息块一致
+    logo: { file: "acs-logo.png", width: 248, height: 150, alt: "ACS - Aion Cargo Solutions" },
+    badge: { file: "wca-badge.png", width: 90, height: 60, alt: "WCA Advanced Professionals" },
     // 不需要底部徽章就设为 null
   },
 
@@ -60,9 +64,11 @@ export const SIGNATURE_CONFIG = {
 
   colors: {
     text: "#1a1a1a",
+    value: "#333333", // 联系方式内容
     muted: "#6b6b6b",
-    label: "#D70F44", // 联系方式前的小标签（M / T / E / W / A）
+    label: "#D70F44", // 联系方式前的标签（Mobile / Tel / Email / Web / Address）
     link: "#1a1a1a",
+    footer: "#8c8c8c", // 底部免责声明
     divider: "#D70F44", // Logo 与信息之间的竖线
     hairline: "#e2e2e2", // 底部分隔细线
     accent: "#D70F44", // ACS Logo 红色

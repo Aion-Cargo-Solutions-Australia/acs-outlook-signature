@@ -36,7 +36,7 @@ test("normalizeProfile: graph data, ext attribute and fallbacks", () => {
 
 test("full signature contains all rows, images with explicit size, no <style>/svg", () => {
   const html = buildFullSignature(normalizeProfile(me, CFG, {}), CFG, src);
-  for (const s of ["Ivy Hu", "+61 425 666 802", "EXT 601", "mailto:ivy.hu@aioncargo.com", "www.aioncargo.com", "Pyrmont", "cid:logo.png", "cid:badge.png", 'width="124" height="77"', "Kind regards,"]) {
+  for (const s of ["Ivy Hu", "+61 425 666 802", "Ext.</span>&nbsp;601", "mailto:ivy.hu@aioncargo.com", "www.aioncargo.com", "Pyrmont", "cid:logo.png", "cid:badge.png", 'width="248" height="150"', "Kind regards,", ">Mobile<", ">Tel<", ">Email<", ">Web<", ">Address<"]) {
     assert.ok(html.includes(s), "missing " + s);
   }
   assert.ok(!/<style|<svg|class=/i.test(html));
@@ -52,6 +52,14 @@ test("extension-only office phone uses main number; home street address is ignor
   assert.ok(html.includes("Pyrmont"));
 });
 
+test("stale cached profile with a personal address never shows it", () => {
+  const p = { ...normalizeProfile(me, CFG, {}), address: "11 Home St, St Ives NSW 2075" };
+  for (const html of [buildFullSignature(p, CFG, src), buildShortSignature(p, CFG)]) {
+    assert.ok(!html.includes("Home St"));
+    assert.ok(html.includes("Pyrmont"));
+  }
+});
+
 test("disclaimer is a single line", () => {
   const html = buildFullSignature(normalizeProfile(me, CFG, {}), CFG, src);
   const m = html.match(/This email is subject to our.*?<\/td>/);
@@ -60,14 +68,14 @@ test("disclaimer is a single line", () => {
 
 test("full signature omits empty rows", () => {
   const html = buildFullSignature(normalizeProfile({ displayName: "No Mobile", mail: "n@aioncargo.com" }, CFG, {}), CFG, src);
-  assert.ok(!html.includes(">M<"));
-  assert.ok(html.includes(">T<") && html.includes("+61 2 9160 2300")); // falls back to main phone
+  assert.ok(!html.includes(">Mobile<"));
+  assert.ok(html.includes(">Tel<") && html.includes("+61 2 9160 2300")); // falls back to main phone
 });
 
 test("short signature: no images, has name/title/phones", () => {
   const html = buildShortSignature(normalizeProfile(me, CFG, {}), CFG);
   assert.ok(!/<img/i.test(html));
-  for (const s of ["Ivy Hu", "Managing Director - Australia", "M</b>&nbsp;+61 425 666 802", "EXT&nbsp;601", "Aion Cargo Solutions", "Suite 4.06, 55 Miller St, Pyrmont NSW 2009"]) assert.ok(html.includes(s), "missing " + s);
+  for (const s of ["Ivy Hu", "Managing Director - Australia", "Mobile</b>&nbsp;+61 425 666 802", "Ext.</span>&nbsp;601", "Aion Cargo Solutions", "Suite 4.06, 55 Miller St, Pyrmont NSW 2009"]) assert.ok(html.includes(s), "missing " + s);
 });
 
 test("HTML injection is escaped", () => {
