@@ -1,8 +1,8 @@
 {
   "_comment": "部署前必须修改：baseUrl（加载项托管地址，必须 HTTPS 且放在域名根目录）、clientId、tenantId。改完运行 npm run build。",
   "baseUrl": "https://sig.breezefreight.com",
-  "clientId": "00000000-0000-0000-0000-000000000000",
-  "tenantId": "organizations",
+  "clientId": "dccbf1f2-450a-4138-9229-f61fdb228119",
+  "tenantId": "d790e7fb-73a9-447b-8bc0-087a0b50efff",
   "addinId": "7d1f3c2a-5b8e-4a61-9f0d-2c6e8b4a1d73",
   "version": "1.0.0.0",
   "providerName": "Aion Cargo Solutions",
