@@ -15,8 +15,9 @@ export const SIGNATURE_CONFIG = {
     addressUrl: "https://maps.google.com/?q=Suite+4.06,+55+Miller+St,+Pyrmont+NSW+2009",
     // 保密声明 & 条款链接 —— 请替换为你们真实的地址
     termsUrl: "https://www.aioncargo.co.nz/au-tc/",
-    termsText: "Confidentiality Statement & Terms Conditions",
-    disclaimer: "This email is subject to our confidentiality provisions and T&C -- available here:",
+    termsText: "Confidentiality Statement & Terms and Conditions",
+    // 免责声明（一行）：disclaimerPrefix + 链接文字(termsText)
+    disclaimerPrefix: "This email is subject to our",
   },
 
   // 签名上方的结束语；设为 "" 则不插入
@@ -24,11 +25,11 @@ export const SIGNATURE_CONFIG = {
   // 精简签名是否也带结束语
   signOffInShort: true,
 
-  // 完整签名是否显示职位（你们现在的签名没有职位，默认关闭）
-  showTitleInFull: false,
+  // 完整签名是否在姓名下方显示职位
+  showTitleInFull: true,
   // 精简签名是否显示职位
   showTitleInShort: true,
-  // 精简签名是否在公司名称后显示澳洲公司地址（Entra 填了个人街道地址时优先用个人地址）
+  // 精简签名是否在公司名称后显示澳洲公司地址
   showAddressInShort: true,
 
   // 分机号来源：先从 Entra "办公电话" 里解析（如 "+61 2 9160 2300 EXT 601" / "x601"），
@@ -44,8 +45,8 @@ export const SIGNATURE_CONFIG = {
 
   images: {
     // 文件放在 src/assets/ 下；width/height 是显示尺寸（源图建议为 2 倍分辨率）
-    logo: { file: "acs-logo.png", width: 131, height: 81, alt: "ACS - Aion Cargo Solutions" },
-    badge: { file: "wca-badge.png", width: 130, height: 84, alt: "WCA Advanced Professionals" },
+    logo: { file: "acs-logo.png", width: 124, height: 77, alt: "ACS - Aion Cargo Solutions" },
+    badge: { file: "wca-badge.png", width: 70, height: 51, alt: "WCA Advanced Professionals" },
     // 不需要底部徽章就设为 null
   },
 
@@ -58,11 +59,12 @@ export const SIGNATURE_CONFIG = {
   forwardAlwaysFull: true,
 
   colors: {
-    text: "#1f1f1f",
-    muted: "#7f7f7f",
-    label: "#1f1f1f",
-    link: "#1155cc",
-    divider: "#7f7f7f",
+    text: "#1a1a1a",
+    muted: "#6b6b6b",
+    label: "#D70F44", // 联系方式前的小标签（M / T / E / W / A）
+    link: "#1a1a1a",
+    divider: "#D70F44", // Logo 与信息之间的竖线
+    hairline: "#e2e2e2", // 底部分隔细线
     accent: "#D70F44", // ACS Logo 红色
   },
   fontFamily: "Arial, Helvetica, sans-serif",

@@ -11,6 +11,9 @@ export const GRAPH_SELECT = [
 /** "+61 2 9160 2300 EXT 601" / "+61 2 9160 2300 x601" / "+61 2 9160 2300 ext.601" → { number, ext } */
 export function splitExtension(raw) {
   if (!raw) return { number: "", ext: "" };
+  // 只填了分机（如 "EXT 602" / "x602" / "602"）
+  const only = String(raw).match(/^\s*(?:ext\.?|extension|x|#)?\s*(\d{1,6})\s*$/i);
+  if (only) return { number: "", ext: only[1] };
   const m = String(raw).match(/^(.*?)[\s,;]*(?:ext\.?|extension|x|#)\s*(\d{1,6})\s*$/i);
   if (m && m[1].replace(/\D/g, "").length >= 6) return { number: m[1].trim(), ext: m[2] };
   return { number: String(raw).trim(), ext: "" };
@@ -39,10 +42,8 @@ export function normalizeProfile(me, cfg, fallback) {
     mobile: (me.mobilePhone || "").trim(),
     phone: split.number || (cfg.company && cfg.company.mainPhone) || "",
     ext: ext || "",
-    // 只有在 Entra 填了街道地址时才覆盖公司地址
-    address: me.streetAddress
-      ? [me.streetAddress, [me.city, me.state, me.postalCode].filter(Boolean).join(" ")].filter(Boolean).join(", ")
-      : "",
+    // 不读取 Entra 的街道地址（通常是员工住址），签名统一使用公司地址
+    address: "",
     source: me.displayName ? "graph" : "fallback",
   };
 }

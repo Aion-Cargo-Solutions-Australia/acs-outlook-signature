@@ -16,6 +16,17 @@ function asPromise(fn) {
   });
 }
 
+/** 给异步操作加超时，避免登录 / Graph 卡住导致整封邮件没有签名 */
+export function withTimeout(promise, ms, label) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error((label || "operation") + " timed out after " + ms + "ms")), ms);
+    promise.then(
+      (v) => { clearTimeout(t); resolve(v); },
+      (e) => { clearTimeout(t); reject(e); }
+    );
+  });
+}
+
 function item() {
   return Office.context.mailbox.item;
 }
@@ -62,7 +73,7 @@ export async function loadProfile(allowPopup) {
   let token = null;
   let error = null;
   try {
-    token = await getToken(!!allowPopup);
+    token = allowPopup ? await getToken(true) : await withTimeout(getToken(false), 8000, "token");
   } catch (e) {
     error = e;
     log("token failed", e && e.message);
@@ -70,7 +81,7 @@ export async function loadProfile(allowPopup) {
 
   if (token && (!isFresh(cached) || allowPopup)) {
     try {
-      const me = await fetchMe(token);
+      const me = await withTimeout(fetchMe(token), 8000, "graph /me");
       const profile = normalizeProfile(me, CFG, fallbackUser());
       await saveCachedProfile(profile);
       return { profile: profile, token: token, error: null };
@@ -95,7 +106,7 @@ export async function decideVariant(profile, token) {
   const conversationId = item().conversationId;
   if (token && conversationId) {
     try {
-      if (await hasSentInConversation(token, conversationId)) {
+      if (await withTimeout(hasSentInConversation(token, conversationId), 6000, "sent-items")) {
         return { variant: "short", reason: "already sent in this conversation (Graph)", composeType: composeType };
       }
     } catch (e) {

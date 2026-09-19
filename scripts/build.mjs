@@ -43,7 +43,7 @@ fs.writeFileSync(path.join(gen, "images.js"), "// 自动生成，勿改\nexport 
 // ---- 打包 ----
 fs.rmSync(dist, { recursive: true, force: true });
 fs.mkdirSync(path.join(dist, "assets"), { recursive: true });
-const common = { bundle: true, format: "iife", target: ["es2017"], minify: true, sourcemap: false, legalComments: "none", logLevel: "warning" };
+const common = { bundle: true, format: "iife", target: ["es2016"], minify: true, sourcemap: false, legalComments: "none", logLevel: "warning" };
 await build({ ...common, entryPoints: [path.join(root, "src/launchevent/launchevent.js")], outfile: path.join(dist, "launchevent.js") });
 await build({ ...common, entryPoints: [path.join(root, "src/taskpane/taskpane.js")], outfile: path.join(dist, "taskpane.js") });
 

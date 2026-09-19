@@ -36,19 +36,29 @@ function row(cfg, label, valueHtml) {
   const c = cfg.colors;
   return (
     "<tr>" +
-    '<td style="padding:3px 18px 3px 0;font-family:' + cfg.fontFamily + ";font-size:13px;font-weight:bold;color:" + c.label +
+    '<td width="16" style="padding:2px 8px 2px 0;font-family:' + cfg.fontFamily + ";font-size:11px;line-height:18px;font-weight:bold;color:" + c.label +
     ';white-space:nowrap;vertical-align:top;">' + label + "</td>" +
-    '<td style="padding:3px 0;font-family:' + cfg.fontFamily + ";font-size:13px;color:" + c.muted + ';vertical-align:top;">' +
+    '<td style="padding:2px 0;font-family:' + cfg.fontFamily + ";font-size:12px;line-height:18px;color:" + c.muted + ';vertical-align:top;">' +
     valueHtml + "</td>" +
     "</tr>"
   );
 }
 
-function link(cfg, href, text) {
-  return '<a href="' + escapeHtml(href) + '" style="color:' + cfg.colors.link + ';text-decoration:underline;">' + escapeHtml(text) + "</a>";
+function link(cfg, href, text, color, underline) {
+  return '<a href="' + escapeHtml(href) + '" style="color:' + (color || cfg.colors.link) + ";text-decoration:" + (underline ? "underline" : "none") + ';">' + escapeHtml(text) + "</a>";
 }
 
 /**
+ * 完整签名
+ *  ┌──────────┬─────────────────────────────┐
+ *  │ ACS Logo │ Name                        │
+ *  │          │ Title                       │
+ *  │          │ M / T / E / W / A           │
+ *  └──────────┴─────────────────────────────┘
+ *  ───────────── 细分隔线 ─────────────
+ *  This email is subject to our Confidentiality Statement & Terms and Conditions.
+ *  [WCA 徽章]
+ *
  * @param {object} p   标准化后的用户资料（见 profile.js normalizeProfile）
  * @param {object} cfg SIGNATURE_CONFIG
  * @param {(key:string)=>string} imageSrc 返回图片 src（cid:xxx 或 https 链接）
@@ -57,47 +67,61 @@ export function buildFullSignature(p, cfg, imageSrc) {
   const c = cfg.colors;
   const f = cfg.fontFamily;
   const co = cfg.company;
+  const plain = (t) => escapeHtml(t);
   const rows = [];
 
-  if (p.mobile) rows.push(row(cfg, "Mob", '<a href="' + telHref(p.mobile) + '" style="color:' + c.muted + ';text-decoration:none;">' + escapeHtml(p.mobile) + "</a>"));
-  if (p.phone) {
-    let tel = '<a href="' + telHref(p.phone) + '" style="color:' + c.muted + ';text-decoration:none;">' + escapeHtml(p.phone) + "</a>";
-    if (p.ext) tel += ' <span style="color:' + c.label + ';font-weight:bold;">EXT</span> ' + escapeHtml(p.ext);
-    rows.push(row(cfg, "Tel", tel));
+  if (p.mobile) rows.push(row(cfg, "M", link(cfg, telHref(p.mobile), p.mobile, c.muted)));
+  if (p.phone || p.ext) {
+    let tel = p.phone ? link(cfg, telHref(p.phone), p.phone, c.muted) : "";
+    if (p.ext) tel += (tel ? "&nbsp;&nbsp;" : "") + '<span style="color:' + c.text + ';">EXT ' + plain(p.ext) + "</span>";
+    rows.push(row(cfg, "T", tel));
   }
-  if (p.email) rows.push(row(cfg, "Email", link(cfg, "mailto:" + p.email, p.email)));
-  if (co.website) rows.push(row(cfg, "Web", link(cfg, co.websiteUrl || "https://" + co.website, co.website)));
+  if (p.email) rows.push(row(cfg, "E", link(cfg, "mailto:" + p.email, p.email, c.muted)));
+  if (co.website) rows.push(row(cfg, "W", link(cfg, co.websiteUrl || "https://" + co.website, co.website, c.muted)));
   const address = p.address || co.address;
-  if (address) rows.push(row(cfg, "Address", co.addressUrl && !p.address ? link(cfg, co.addressUrl, address) : escapeHtml(address)));
+  if (address) rows.push(row(cfg, "A", co.addressUrl && !p.address ? link(cfg, co.addressUrl, address, c.muted) : plain(address)));
 
-  const title = cfg.showTitleInFull && p.jobTitle
-    ? '<div style="font-family:' + f + ";font-size:13px;color:" + c.muted + ';padding:0 0 6px 0;">' + escapeHtml(p.jobTitle) + "</div>"
-    : "";
-
+  const subtitle = [cfg.showTitleInFull && p.jobTitle ? p.jobTitle : ""].filter(Boolean);
   const logo = cfg.images.logo;
   const badge = cfg.images.badge;
+  const leftW = logo ? logo.width : 0;
 
-  let html = "";
-  html += '<div id="acs-signature" data-acs-sig="full">';
+  let html = '<div id="acs-signature" data-acs-sig="full">';
   html += signOffHtml(cfg);
   html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">';
   html += "<tr>";
-  if (logo) {
-    html += '<td width="' + (logo.width + 24) + '" style="padding:0 24px 0 0;vertical-align:middle;">' + imgTag(logo, imageSrc("logo")) + "</td>";
+
+  // 左列：Logo + 徽章
+  if (leftW) {
+    html += '<td width="' + leftW + '" valign="top" style="padding:2px 18px 0 0;vertical-align:top;">';
+    html += imgTag(logo, imageSrc("logo"));
+    html += "</td>";
   }
-  html += '<td style="border-left:4px solid ' + c.divider + ';padding:2px 0 2px 18px;vertical-align:top;">';
-  html += '<div style="font-family:' + f + ";font-size:22px;line-height:28px;color:" + c.text + ';padding:0 0 6px 0;">' + escapeHtml(p.displayName) + "</div>";
-  html += title;
+
+  // 右列：姓名 / 职位 / 联系方式
+  html += '<td valign="top" style="border-left:2px solid ' + c.divider + ';padding:0 0 0 18px;vertical-align:top;">';
+  html += '<div style="font-family:' + f + ";font-size:20px;line-height:24px;font-weight:bold;color:" + c.text + ';letter-spacing:0.2px;">' + plain(p.displayName) + "</div>";
+  if (subtitle.length) {
+    html += '<div style="font-family:' + f + ";font-size:12px;line-height:18px;color:" + c.muted + ';padding:2px 0 10px 0;">' +
+      subtitle.map(plain).join('<span style="color:' + c.accent + ';">&nbsp;&nbsp;|&nbsp;&nbsp;</span>') + "</div>";
+  } else {
+    html += '<div style="height:10px;line-height:10px;font-size:1px;">&nbsp;</div>';
+  }
   html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">' + rows.join("") + "</table>";
   html += "</td></tr></table>";
 
-  if (co.disclaimer) {
-    html += '<p style="margin:12px 0 0 0;font-family:' + f + ";font-size:12px;line-height:18px;color:" + c.muted + ';">' + escapeHtml(co.disclaimer);
-    if (co.termsUrl) html += "<br/>" + link(cfg, co.termsUrl, co.termsText || co.termsUrl);
-    html += "</p>";
+  // 底部：细线 + 一行免责声明
+  if (co.termsUrl || co.disclaimerPrefix) {
+    html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;margin-top:14px;"><tr>';
+    html += '<td style="border-top:1px solid ' + c.hairline + ';padding:8px 0 0 0;font-family:' + f + ";font-size:10.5px;line-height:15px;color:#9a9a9a;\">";
+    html += plain(co.disclaimerPrefix || "") + (co.disclaimerPrefix ? " " : "");
+    html += co.termsUrl ? link(cfg, co.termsUrl, co.termsText || co.termsUrl, "#9a9a9a", true) : "";
+    html += ".</td></tr></table>";
   }
+  // 最下方：WCA 徽章（比 ACS Logo 小）
   if (badge) {
-    html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-top:12px;"><tr><td>' + imgTag(badge, imageSrc("badge")) + "</td></tr></table>";
+    html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;margin-top:10px;"><tr><td>' +
+      imgTag(badge, imageSrc("badge")) + "</td></tr></table>";
   }
   html += "</div>";
   return html;
@@ -122,7 +146,7 @@ export function buildShortSignature(p, cfg) {
 
   const parts = [];
   if (p.mobile) parts.push('<b style="color:' + c.label + ';">M</b>&nbsp;' + escapeHtml(p.mobile));
-  if (p.phone) parts.push('<b style="color:' + c.label + ';">T</b>&nbsp;' + escapeHtml(p.phone) + (p.ext ? "&nbsp;ext&nbsp;" + escapeHtml(p.ext) : ""));
+  if (p.phone) parts.push('<b style="color:' + c.label + ';">T</b>&nbsp;' + escapeHtml(p.phone) + (p.ext ? "&nbsp;EXT&nbsp;" + escapeHtml(p.ext) : ""));
   if (co.website) parts.push(link(cfg, co.websiteUrl || "https://" + co.website, co.website));
 
   let html = '<div id="acs-signature" data-acs-sig="short">';
