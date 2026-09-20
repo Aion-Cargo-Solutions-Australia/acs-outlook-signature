@@ -127,19 +127,19 @@ async function addInlineImage(key) {
 }
 
 export function imageSrcFactory(mode) {
-  return function (key) {
+  // forceLink=true：CSS 背景图只能用 http(s) 地址，cid: 在背景图里不生效
+  return function (key, forceLink) {
     const img = IMAGES[key];
     if (!img) return "";
-    return mode === "embed" ? "cid:" + img.cid : ADDIN.baseUrl + "/assets/" + img.file;
+    return mode === "embed" && !forceLink ? "cid:" + img.cid : ADDIN.baseUrl + "/assets/" + img.file;
   };
 }
 
-/** 当前变体真正会用到的内嵌图片 */
+/** 当前变体真正需要内嵌（CID 附件）的图片。圆环走 CSS 背景图，不需要内嵌 */
 export function imageKeysFor(variant) {
   const pos = CFG.markPosition;
-  if (variant === "short") return CFG.markInShort && CFG.images.markCorner ? ["markCorner"] : [];
-  const used = (k) =>
-    k === "mark" ? pos === "footer" || pos === "name" : k === "markCorner" ? pos === "overlay" || pos === "corner" : true;
+  if (variant === "short") return [];
+  const used = (k) => (k === "mark" ? pos === "footer" || pos === "name" : k === "markCorner" ? pos === "corner" : true);
   return Object.keys(IMAGES).filter((k) => CFG.images[k] && used(k));
 }
 

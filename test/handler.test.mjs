@@ -48,7 +48,7 @@ test("new message → full signature with embedded images", async () => {
   const { calls } = await run({ composeType: "newMail" });
   assert.ok(calls.disabled);
   assert.match(calls.signature, /data-acs-sig="full"/);
-  assert.deepEqual(calls.attachments, ["acs-logo.png", "wca-badge.png", "acs-mark-corner.png"]);
+  assert.deepEqual(calls.attachments, ["acs-logo.png", "wca-badge.png"]);
   assert.match(calls.signature, /cid:acs-logo\.png/);
 });
 
@@ -61,7 +61,7 @@ test("first reply (never sent in conversation) → full", async () => {
 test("later reply (already sent) → short, only the faded mark is embedded", async () => {
   const { calls } = await run({ composeType: "reply", sent: true });
   assert.match(calls.signature, /data-acs-sig="short"/);
-  assert.deepEqual(calls.attachments, ["acs-mark-corner.png"]);
+  assert.equal(calls.attachments.length, 0); // 圆环是 CSS 背景图，不占附件
 });
 
 test("forward → full (forwardAlwaysFull)", async () => {

@@ -32,15 +32,16 @@ function imgTag(img, src) {
   );
 }
 
-function row(cfg, label, valueHtml) {
+function row(cfg, label, valueHtml, wrap) {
   const c = cfg.colors;
   const s = cfg.fontSizes;
   return (
     "<tr>" +
     '<td width="44" style="width:44px;padding:0 8px 0 0;font-family:' + cfg.fontFamily + ";font-size:" + s.label + "px;line-height:" + s.rowLine +
     "px;font-weight:bold;color:" + c.label + ';white-space:nowrap;vertical-align:top;">' + escapeHtml(label) + "</td>" +
+    // 地址允许换行：手机上屏幕窄，不换行会把左边的 Logo 挤扁
     '<td style="padding:0;font-family:' + cfg.fontFamily + ";font-size:" + s.row + "px;line-height:" + s.rowLine + "px;color:" + c.value +
-    ';white-space:nowrap;vertical-align:top;">' + valueHtml + "</td>" +
+    ";" + (wrap ? "" : "white-space:nowrap;") + 'vertical-align:top;">' + valueHtml + "</td>" +
     "</tr>"
   );
 }
@@ -52,6 +53,19 @@ function disclaimerHtml(cfg) {
   return (
     escapeHtml(co.disclaimerPrefix || "") + (co.disclaimerPrefix ? " " : "") +
     (co.termsUrl ? link(cfg, co.termsUrl, co.termsText || co.termsUrl, cfg.colors.footer, true) : "") + "."
+  );
+}
+
+/**
+ * 淡化圆环的背景图样式。背景图不占位、不会影响排版：
+ * 支持的客户端把它画在文字下层，不支持的（经典 Outlook）或拦截远程图片的就什么都不显示。
+ */
+function markBackgroundCss(cfg, img, imageSrc, offset) {
+  const o = offset || { right: 0, bottom: 0 };
+  return (
+    "background-image:url(" + escapeHtml(imageSrc("markCorner", true)) + ");background-repeat:no-repeat;" +
+    "background-position:right " + o.right + "px bottom " + o.bottom + "px;" +
+    "background-size:" + img.width + "px " + img.height + "px;"
   );
 }
 
@@ -95,7 +109,7 @@ export function buildFullSignature(p, cfg, imageSrc) {
   if (p.email) rows.push(row(cfg, L.email, link(cfg, "mailto:" + p.email, p.email, c.value)));
   if (co.website) rows.push(row(cfg, L.web, link(cfg, co.websiteUrl || "https://" + co.website, co.website, c.value)));
   // 地址统一使用公司地址（不读个人资料里的地址，旧版本缓存里可能存有员工住址）
-  if (co.address) rows.push(row(cfg, L.address, co.addressUrl ? link(cfg, co.addressUrl, co.address, c.value) : plain(co.address)));
+  if (co.address) rows.push(row(cfg, L.address, co.addressUrl ? link(cfg, co.addressUrl, co.address, c.value) : plain(co.address), true));
 
   const s = cfg.fontSizes;
   const logo = cfg.images.logo;
@@ -134,16 +148,10 @@ export function buildFullSignature(p, cfg, imageSrc) {
   html += '<div style="height:7px;line-height:7px;font-size:1px;">&nbsp;</div>';
   const rowsHtml = '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">' + rows.join("") + "</table>";
   if (corner && cfg.markPosition === "overlay") {
-    // 淡化的 1/4 圆环压在地址那一行的文字后面（z-index:-1 → 在文字下层）。
-    // 经典 Outlook（Word 引擎）不支持定位，用 mso-hide:all 直接隐藏，避免图片掉到文字下面破版。
-    const o = cfg.markOverlayOffset || { right: 24, bottom: 0 };
-    // 图片先画、文字表格后画（两者都是定位元素，按文档顺序叠放）→ 文字始终在圆环上层
-    html += '<div style="position:relative;">' +
-      '<img src="' + escapeHtml(imageSrc("markCorner")) + '" width="' + corner.width + '" height="' + corner.height + '" alt="" ' +
-      'style="position:absolute;right:' + o.right + "px;bottom:" + o.bottom + "px;width:" + corner.width + "px;height:" + corner.height +
-      'px;border:0;outline:none;mso-hide:all;" />' +
-      rowsHtml.replace("border-collapse:collapse;", "border-collapse:collapse;position:relative;") +
-      "</div>";
+    // 淡化的 1/4 圆环做成 CSS 背景图，压在联系方式文字后面。
+    // 用背景图而不是定位图片：手机版 Outlook 会删掉 position:absolute，图片就会掉进正文里破版；
+    // 背景图最坏的情况只是不显示（经典 Outlook / 拦截远程图片时），排版永远不会乱。
+    html += '<div style="' + markBackgroundCss(cfg, corner, imageSrc, cfg.markOverlayOffset) + '">' + rowsHtml + "</div>";
   } else if (corner && cfg.markPosition === "corner") {
     // 不重叠的版本：联系方式右侧单独一格（所有邮件客户端都支持）
     html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>' +
@@ -211,18 +219,14 @@ export function buildShortSignature(p, cfg, imageSrc) {
   if (cfg.signOffInShort) html += signOffHtml(cfg);
   html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>';
   html += '<td style="border-left:3px solid ' + c.accent + ';padding:1px 0 1px 10px;font-family:' + f + ";font-size:12px;line-height:19px;color:" + c.muted + ';">';
-  // 圆环先画、文字后画 → 文字在上层
-  if (showMark) {
-    html += '<div style="position:relative;"><img src="' + escapeHtml(imageSrc("markCorner")) + '" width="' + corner.width + '" height="' +
-      corner.height + '" alt="" style="position:absolute;right:' + o.right + "px;bottom:" + o.bottom + "px;width:" + corner.width +
-      "px;height:" + corner.height + 'px;border:0;outline:none;mso-hide:all;" /><div style="position:relative;">';
-  }
+  // 圆环用 CSS 背景图（不占位，手机上也不会把排版挤乱）
+  if (showMark) html += '<div style="' + markBackgroundCss(cfg, corner, imageSrc, o) + '">';
   html += line1 + "<br/>" + line2 + "<br/>" + parts.join(sep);
   const disclaimer = disclaimerHtml(cfg);
   if (disclaimer) {
     html += '<div style="padding:6px 0 0 0;font-size:10px;line-height:14px;color:' + c.footer + ';">' + disclaimer + "</div>";
   }
-  if (showMark) html += "</div></div>";
+  if (showMark) html += "</div>";
   html += "</td></tr></table></div>";
   return html;
 }
