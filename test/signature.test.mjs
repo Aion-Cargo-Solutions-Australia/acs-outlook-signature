@@ -36,7 +36,7 @@ test("normalizeProfile: graph data, ext attribute and fallbacks", () => {
 
 test("full signature contains all rows, images with explicit size, no <style>/svg", () => {
   const html = buildFullSignature(normalizeProfile(me, CFG, {}), CFG, src);
-  for (const s of ["Ivy Hu", "+61 425 666 802", "Ext.</span>&nbsp;601", "mailto:ivy.hu@aioncargo.com", "www.aioncargo.com", "Pyrmont", "cid:logo.png", "cid:badge.png", "background-image:url(cid:markCorner.png)", 'width="198" height="120"', "Kind regards,", ">Mobile<", ">Tel<", ">Email<", ">Web<", ">Address<"]) {
+  for (const s of ["Ivy Hu", "+61 425 666 802", "Ext.</span>&nbsp;601", "mailto:ivy.hu@aioncargo.com", "www.aioncargo.com", "Pyrmont", "cid:logo.png", "cid:badge.png", "background-image:url(cid:markCorner.png)", 'width="150" height="91"', "Kind regards,", ">Mobile<", ">Tel<", ">Email<", ">Web<", ">Address<"]) {
     assert.ok(html.includes(s), "missing " + s);
   }
   assert.ok(!/<style|<svg|class=/i.test(html));

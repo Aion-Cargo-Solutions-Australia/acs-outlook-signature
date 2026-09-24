@@ -49,7 +49,7 @@ export const SIGNATURE_CONFIG = {
   images: {
     // 文件放在 src/assets/ 下；width/height 是显示尺寸（源图为 2 倍分辨率，透明背景 + 白色描边以适配暗色模式）
     // Logo 高度与右侧姓名 + 联系方式信息块一致
-    logo: { file: "acs-logo.png", width: 198, height: 120, alt: "ACS - Aion Cargo Solutions" },
+    logo: { file: "acs-logo.png", width: 150, height: 91, alt: "ACS - Aion Cargo Solutions" },
     badge: { file: "wca-badge.png", width: 78, height: 52, alt: "WCA Advanced Professionals" },
     // ACS 品牌圆环标志：完整圆环（footer / name 位置用）
     mark: { file: "acs-mark.png", width: 40, height: 38, alt: "" },
