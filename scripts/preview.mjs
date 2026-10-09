@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SIGNATURE_CONFIG as CFG } from "../src/config.js";
 import { buildFullSignature, buildShortSignature } from "../src/shared/signature.js";
-import { normalizeProfile } from "../src/shared/profile.js";
+import { normalizeProfile, findSharedMailbox, teamProfile } from "../src/shared/profile.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const me = {
@@ -15,6 +15,12 @@ const p = normalizeProfile(me, CFG, {});
 const dataUri = (k) => "data:image/png;base64," + fs.readFileSync(path.join(root, "src/assets", CFG.images[k].file)).toString("base64");
 const full = buildFullSignature(p, CFG, dataUri);
 const short = buildShortSignature(p, CFG, dataUri);
+// 共享邮箱（团队版）：示例人物是虚构的
+const box = findSharedMailbox("importair@aioncargo.com.au", CFG);
+const member = normalizeProfile({ displayName: "Alex Chen", jobTitle: "Import Coordinator", mail: "alex.chen@aioncargo.com", mobilePhone: "+61 400 000 000", businessPhones: ["+61 2 9160 2300 EXT 605"] }, CFG, {});
+const team = teamProfile(member, box, CFG);
+const teamFull = buildFullSignature(team, CFG, dataUri);
+const teamShort = buildShortSignature(team, CFG, dataUri);
 
 const quoted = (inner) =>
   '<div style="border-top:1px solid #e1e1e1;margin-top:18px;padding-top:10px;font:12px Arial;color:#555;"><b>From:</b> John Smith &lt;john@client.com&gt;<br/><b>Sent:</b> Friday, 18 September 2026 3:12 PM<br/><b>Subject:</b> RE: Shipment quote SYD → SIN</div>' + (inner || "");
@@ -30,6 +36,8 @@ h1{font-size:20px;margin:0 0 4px}.sub{color:#666;margin:0 0 20px}.mail{backgroun
 <div class="mail"><span class="tag full">① 新邮件 / 会话中第一次回复 / 转发 → 完整签名</span><p class="body">Hi John,<br/><br/>Please find the updated quote attached.</p>${full}</div>
 <div class="mail dark"><span class="tag">③ 暗色模式（模拟 Outlook 深色主题：文字颜色被反转，图片不变）</span><p class="body">Hi John,<br/><br/>Please find the updated quote attached.</p>${full}</div>
 <div class="mail"><span class="tag short">② 同一会话中后续回复 → 精简签名（无图片）</span><p class="body">Hi John,<br/><br/>Confirmed — booking for Monday's vessel.</p>${short}${quoted()}</div>
+<div class="mail"><span class="tag full">④ 用共享邮箱发信（发件人 = ${box.addresses[0]}）→ 团队版完整签名：本人姓名 + 团队名、团队电话和邮箱，不显示个人手机</span><p class="body">Hi John,<br/><br/>Your shipment has arrived and is ready for collection.</p>${teamFull}</div>
+<div class="mail"><span class="tag short">⑤ 共享邮箱：会话里已有团队签名后的回复 → 团队版精简签名</span><p class="body">Hi John,<br/><br/>Ok to pay now, release received.</p>${teamShort}${quoted()}</div>
 </div></body></html>`;
 fs.writeFileSync(path.join(root, "preview.html"), html);
 console.log("✅ preview.html 已生成");

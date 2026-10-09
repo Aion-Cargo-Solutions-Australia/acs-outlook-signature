@@ -39,12 +39,50 @@ export function normalizeProfile(me, cfg, fallback) {
     jobTitle: me.jobTitle || "",
     department: me.department || "",
     email: (me.mail || fallback.emailAddress || me.userPrincipalName || "").toLowerCase(),
+    // 登录账号：用来确认缓存的资料属于当前登录的人（见 office.js loadProfile）
+    upn: (me.userPrincipalName || "").toLowerCase(),
     mobile: (me.mobilePhone || "").trim(),
     phone: split.number || (cfg.company && cfg.company.mainPhone) || "",
     ext: ext || "",
     // 不读取 Entra 的街道地址（通常是员工住址），签名统一使用公司地址
     address: "",
     source: me.displayName ? "graph" : "fallback",
+  };
+}
+
+/** 按发件人地址查共享邮箱配置（config.js sharedMailboxes）；不是共享邮箱返回 null */
+export function findSharedMailbox(address, cfg) {
+  const a = String(address || "").trim().toLowerCase();
+  const list = (cfg && cfg.sharedMailboxes) || [];
+  if (!a) return null;
+  for (let i = 0; i < list.length; i++) {
+    if ((list[i].addresses || []).some((x) => String(x).toLowerCase() === a)) return list[i];
+  }
+  return null;
+}
+
+/**
+ * 团队版资料：姓名、职位仍是发件人本人，电话 / 分机 / 邮箱换成团队的，默认不带个人手机。
+ * @param {object} person normalizeProfile 的结果
+ * @param {object} box    findSharedMailbox 的结果
+ */
+export function teamProfile(person, box, cfg) {
+  const addresses = (box.addresses || []).map((x) => String(x).toLowerCase());
+  // 读不到发件人本人资料（只拿到共享邮箱自己的名字，或什么都没有）时，用团队名代替姓名
+  const anonymous = !person.displayName || (person.source === "fallback" && addresses.indexOf(person.email) !== -1);
+  return {
+    displayName: anonymous ? box.team : person.displayName,
+    jobTitle: anonymous ? "" : person.jobTitle,
+    team: anonymous ? "" : box.team,
+    department: person.department,
+    email: addresses[0] || "",
+    upn: person.upn,
+    mobile: box.showMobile ? person.mobile : "",
+    phone: box.phone || (cfg.company && cfg.company.mainPhone) || "",
+    ext: String(box.ext || "").replace(/^\s*(ext\.?|x)\s*/i, "").trim(),
+    address: "",
+    source: person.source,
+    shared: true,
   };
 }
 
@@ -56,11 +94,12 @@ function digits(s) {
  * 判断引用的历史邮件正文里是否已经出现过“本人”的签名。
  * 用于 Graph 不可用时的兜底判断。
  * 指纹：本人手机号（纯数字）或 “Email <本人邮箱>” 这一行（邮件头的 From/To 行不会以 "Email" 开头）。
+ * 团队版签名只认 “Email <团队邮箱>”：同一个人的个人签名和团队签名不会互相误判。
  */
 export function bodyHasOwnSignature(bodyText, profile) {
   if (!bodyText || !profile) return false;
   const text = String(bodyText);
-  const mob = digits(profile.mobile);
+  const mob = profile.shared ? "" : digits(profile.mobile);
   if (mob.length >= 8) {
     const bodyDigits = digits(text);
     // 同时匹配国际格式和本地格式（+61 4xx / 04xx）

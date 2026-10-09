@@ -11,6 +11,7 @@
 - 个人信息（姓名、手机、电话、分机、职位）从 **Entra ID** 自动读取
 - 公司信息、Logo、免责声明在 `src/config.js` 里统一修改，推送到 GitHub 后全员自动生效
 - **完整签名**用于新邮件、会话中的第一次回复和转发；**精简签名**（无图片，含澳洲地址）用于同一会话中的后续回复
+- 用**共享邮箱**（如 Import Air、Accounts）发信时自动换成**团队版签名**：本人姓名 + 团队名、团队电话和团队邮箱，见[共享邮箱（团队签名）](#共享邮箱团队签名)
 - 图片以内嵌方式插入，收件人**看不到** breezefreight.com，各个客户端显示一致
 
 ---
@@ -157,7 +158,7 @@ Update-MgUser -UserId ivy.hu@aioncargo.com `
   "clientId": "<步骤 4 的应用程序(客户端) ID>",
   "tenantId": "<步骤 4 的目录(租户) ID>",
   "addinId": "7d1f3c2a-5b8e-4a61-9f0d-2c6e8b4a1d73",
-  "version": "1.0.0.0",
+  "version": "1.1.0.0",
   ...
 }
 ```
@@ -226,6 +227,8 @@ Update-MgUser -UserId ivy.hu@aioncargo.com `
 - [ ] 转发 → **完整签名**
 - [ ] 发一封到外部邮箱（Gmail、QQ 邮箱），确认对方收到后图片正常显示
 - [ ] 撰写邮件时点功能区的 **ACS Signature** 按钮 → 面板显示“✔ 已连接 Entra ID”，个人资料正确
+- [ ] 在共享邮箱里新建 / 回复邮件 → **团队版签名**（团队名、团队电话和邮箱，没有个人手机）
+- [ ] 在个人邮箱新建邮件，把发件人改成共享邮箱 → 签名自动换成团队版；改回个人 → 换回个人签名
 
 测试通过后：
 
@@ -249,6 +252,33 @@ Update-MgUser -UserId ivy.hu@aioncargo.com `
 
 ---
 
+## 共享邮箱（团队签名）
+
+发件人 (From) 是 `src/config.js` 里 `sharedMailboxes` 登记的地址时，签名自动换成团队版：
+
+| 签名项 | 个人签名 | 团队版签名 |
+|---|---|---|
+| 姓名、职位 | 本人 | 本人，职位后面加团队名（如 `ACS AU Import Air`） |
+| Mobile | 本人手机 | 不显示（该团队设了 `showMobile: true` 才显示） |
+| Tel + Ext | 本人 | 团队电话和分机 |
+| Email | 本人邮箱 | 团队邮箱（`addresses` 里的第一个） |
+
+- 新邮件和转发用完整签名。回复时，引用的历史邮件里已经有这个团队的签名就用精简签名，否则用完整签名，不管之前是团队里谁回复的。
+- 撰写时切换发件人（个人 ↔ 共享邮箱），签名会跟着换。
+- 读不到发件人本人资料时（没登录授权），姓名位置显示团队名。
+
+**新增或修改团队**：在 `sharedMailboxes` 里加一行或改一行 → 提交。不需要重新上传 manifest。
+
+```js
+{ addresses: ["importair@aioncargo.com.au", "au.importair@aioncargo.com"], team: "ACS AU Import Air", phone: "+61 2 9160 2300", ext: "821" },
+```
+
+`addresses` 要写全这个邮箱在 Exchange 里的**主地址和所有别名**：第一个显示在签名里，其余只用来识别发件人。漏写的话，用那个地址发信时出来的还是个人签名。
+
+**不要把共享邮箱加进“集成应用”的分配用户里。** 加载项只部署给人（用户自己的邮箱），用户用共享邮箱发信时会自动带上。另外共享邮箱不要从通讯录 (GAL) 隐藏，否则加载项在这个邮箱里读不到邮件。
+
+---
+
 ## 日常维护
 
 | 需求 | 操作 | 需要重新上传 manifest 吗 |
@@ -256,9 +286,10 @@ Update-MgUser -UserId ivy.hu@aioncargo.com `
 | 员工换手机、升职 | 在 Entra 修改；最迟 12 小时后签名自动更新，或让员工在面板点“刷新资料” | 否 |
 | 新员工入职 | 补全 Entra 资料即可（加载项已分配给整个组织或组） | 否 |
 | 改公司地址、网址、免责声明、结束语 | 修改 `src/config.js` → 提交 | 否 |
+| 新增共享邮箱，改团队名、电话、分机 | 修改 `src/config.js` 的 `sharedMailboxes` → 提交 | 否 |
 | 换 Logo 或徽章 | 替换 `src/assets/` 里的文件 → 提交 | 否 |
 | 改签名样式 | 修改 `src/shared/signature.js` → 提交 | 否 |
-| 改按钮名称、权限（manifest） | 修改 `manifest.template.xml`，把 `addin.config.json` 的 `version` 改为 `1.0.1.0` → 提交 → 集成应用里**更新**加载项 | **是** |
+| 改按钮名称、权限（manifest） | 修改 `manifest.template.xml`，把 `addin.config.json` 的 `version` 改大（如 `1.1.0.0` → `1.1.1.0`）→ 提交 → 集成应用里**更新**加载项 | **是** |
 
 > WCA 徽章上印有到期日 **2027 年 4 月 7 日**，续期后记得更换图片。
 
@@ -276,6 +307,8 @@ Update-MgUser -UserId ivy.hu@aioncargo.com `
 | 出现两份签名 | 客户端版本过低，不支持屏蔽本地签名 → 删除本地签名 |
 | 签名里某一行缺失 | Entra 里对应字段为空，面板里会标红显示“未填写” |
 | 第二次回复还是完整签名 | 第一次回复还在草稿或发件箱里，没有进入“已发送邮件” |
+| 用共享邮箱发信，出来的是个人签名 | ① 这个发件地址没写进 `sharedMailboxes` 的 `addresses`（主地址和别名都要写）② 集成应用里的 manifest 还是 1.0.0.0，没有更新到 1.1.0.0 |
+| 用共享邮箱发信完全没有签名 | ① 集成应用里的 manifest 还是 1.0.0.0 ② 用的是 Outlook 手机版（见已知限制）③ 共享邮箱被从通讯录 (GAL) 隐藏了 |
 | 手机上点底部“回复”后看不到签名 | Outlook 手机端的已知行为：签名已经插入，展开为全屏编辑就能看到 |
 | Apple Mail 收件人看到 Logo 显示为附件 | 内嵌图片的正常表现；介意的话可以把 `imageMode` 改为 `"link"`（代价是 Outlook 收件人默认可能不显示图片） |
 
@@ -296,7 +329,8 @@ Update-MgUser -UserId ivy.hu@aioncargo.com `
 
 - 打开已有草稿时不会自动插入签名（Outlook 的设计），需要的话可以在面板里手动插入
 - iOS 上通过“共享”新建的邮件不会触发
-- 用共享邮箱或“代表他人发送”时，签名仍然是当前登录用户的
+- Outlook 手机版（iOS / Android）不支持在共享邮箱里运行加载项：用手机从共享邮箱发信不会自动带签名
+- 没有登记在 `sharedMailboxes` 里的共享邮箱，以及“代表另一位同事发送”，签名仍然是当前登录用户的
 - 只处理邮件，不处理会议邀请
 - **breezefreight.com 必须长期续费、DNS 必须保持不变**，否则全公司的签名都会失效。换域名时要按步骤 2–7 重新做一遍（包括在 Entra 里改重定向 URI）
 
@@ -306,7 +340,7 @@ Update-MgUser -UserId ivy.hu@aioncargo.com `
 
 ```bash
 npm install
-npm test          # 12 项单元测试：模板、分机解析、会话判断、事件处理流程
+npm test          # 单元测试：模板、分机解析、会话判断、共享邮箱、事件处理流程
 npm run preview   # 生成 preview.html，用示例资料预览两种签名
 npm run build     # 生成 dist/
 ```
@@ -315,13 +349,13 @@ npm run build     # 生成 dist/
 
 ```
 addin.config.json            ★ 部署参数（域名、clientId、tenantId、版本）
-src/config.js                ★ 公司信息与签名规则
+src/config.js                ★ 公司信息、共享邮箱团队信息与签名规则
 src/assets/                  ★ Logo、徽章、按钮图标
 src/shared/signature.js      完整签名 / 精简签名 HTML 模板
-src/shared/profile.js        Entra 资料标准化、分机解析、会话判断
+src/shared/profile.js        Entra 资料标准化、分机解析、共享邮箱识别、会话判断
 src/shared/graph.js          NAA 单点登录 + Microsoft Graph
-src/shared/office.js         判断签名类型、插入签名
-src/launchevent/             事件入口（自动插入）
+src/shared/office.js         读取发件人、判断签名类型、插入签名
+src/launchevent/             事件入口（新建 / 回复 / 转发时插入，切换发件人时替换）
 src/taskpane/                ACS Signature 侧边面板
 src/well-known/              经典 Outlook 需要的 SSO 白名单
 manifest.template.xml        加载项清单模板

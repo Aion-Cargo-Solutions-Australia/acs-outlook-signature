@@ -3,7 +3,7 @@
 const KEY = "acsSigProfile";
 const MAX_AGE_MS = 12 * 60 * 60 * 1000;
 // 资料格式 / 解析规则变化时 +1：旧版本存下的缓存视为过期，下次有 token 时立即重新从 Graph 读取
-const VERSION = 2;
+const VERSION = 3;
 
 export function readCachedProfile() {
   try {

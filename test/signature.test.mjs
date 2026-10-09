@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { SIGNATURE_CONFIG as CFG } from "../src/config.js";
 import { buildFullSignature, buildShortSignature, escapeHtml } from "../src/shared/signature.js";
-import { normalizeProfile, splitExtension, bodyHasOwnSignature } from "../src/shared/profile.js";
+import { normalizeProfile, splitExtension, bodyHasOwnSignature, findSharedMailbox, teamProfile } from "../src/shared/profile.js";
 
 const me = {
   displayName: "Ivy Hu", jobTitle: "Managing Director - Australia", mail: "Ivy.Hu@aioncargo.com",
@@ -110,4 +110,48 @@ test("thread detection: own signature vs quoted headers", () => {
   const emailOnly = normalizeProfile({ displayName: "X", mail: "x@aioncargo.com" }, CFG, {});
   assert.equal(bodyHasOwnSignature("Email x@aioncargo.com", emailOnly), true);
   assert.equal(bodyHasOwnSignature("To: x@aioncargo.com", emailOnly), false);
+});
+
+test("shared mailbox table: every address belongs to exactly one team", () => {
+  const seen = new Map();
+  for (const box of CFG.sharedMailboxes) {
+    assert.ok(box.team && box.phone && box.addresses.length, "incomplete entry " + JSON.stringify(box));
+    for (const a of box.addresses) {
+      const key = a.toLowerCase();
+      assert.ok(!seen.has(key), key + " is listed for both " + seen.get(key) + " and " + box.team);
+      seen.set(key, box.team);
+    }
+  }
+});
+
+test("findSharedMailbox matches any listed address, case-insensitively", () => {
+  assert.equal(findSharedMailbox("importair@aioncargo.com.au", CFG).team, "ACS AU Import Air");
+  assert.equal(findSharedMailbox(" AU.ImportSea@AionCargo.com ", CFG).team, "ACS AU Import Sea");
+  assert.equal(findSharedMailbox("ivy.hu@aioncargo.com", CFG), null);
+  assert.equal(findSharedMailbox("", CFG), null);
+});
+
+test("teamProfile keeps the person's name, swaps in team contact details", () => {
+  const box = findSharedMailbox("au.accounts@aioncargo.com", CFG);
+  const t = teamProfile(normalizeProfile(me, CFG, {}), box, CFG);
+  assert.deepEqual([t.displayName, t.team, t.email, t.phone, t.ext, t.mobile, t.shared], ["Ivy Hu", "ACS AU Accounts", "accounts@aioncargo.com.au", "+61 2 9160 2300", "820", "", true]);
+  const withMobile = teamProfile(normalizeProfile(me, CFG, {}), { ...box, showMobile: true }, CFG);
+  assert.equal(withMobile.mobile, "+61 425 666 802");
+});
+
+test("team signatures: full and short show team name and team mailbox", () => {
+  const t = teamProfile(normalizeProfile(me, CFG, {}), findSharedMailbox("exportair@aioncargo.com.au", CFG), CFG);
+  const full = buildFullSignature(t, CFG, src);
+  for (const s of ["Ivy Hu", "Managing Director - Australia", "ACS AU Export Air", "mailto:exportair@aioncargo.com.au", "&nbsp;822", "Pyrmont"]) assert.ok(full.includes(s), "full missing " + s);
+  assert.ok(!full.includes(">Mobile<") && full.length < 30000);
+  const short = buildShortSignature(t, CFG);
+  for (const s of ["Ivy Hu", "ACS AU Export Air", "mailto:exportair@aioncargo.com.au", "&nbsp;822"]) assert.ok(short.includes(s), "short missing " + s);
+  // 个人签名不受影响：精简版不带邮箱
+  assert.ok(!buildShortSignature(normalizeProfile(me, CFG, {}), CFG).includes("mailto:"));
+});
+
+test("thread detection: team signature is recognised by the team mailbox only", () => {
+  const t = teamProfile(normalizeProfile(me, CFG, {}), { ...findSharedMailbox("accounts@aioncargo.com.au", CFG), showMobile: true }, CFG);
+  assert.equal(bodyHasOwnSignature("Kind regards,\nZora Zhang\nACS AU Accounts\nEmail accounts@aioncargo.com.au", t), true);
+  assert.equal(bodyHasOwnSignature("Kind regards,\nIvy Hu\nMobile +61 425 666 802\nEmail ivy.hu@aioncargo.com", t), false);
 });
