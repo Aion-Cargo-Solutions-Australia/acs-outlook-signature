@@ -73,6 +73,15 @@ function extHtml(cfg, ext) {
   return '<span style="color:' + cfg.colors.muted + ';">Ext.</span>&nbsp;' + escapeHtml(ext);
 }
 
+/**
+ * 签名容器的 id。后面带一段排查标记（收件人看不到）：生成签名的代码版本、按个人还是团队生成、当时看到的发件人。
+ * 邮件客户端会删掉 data-* 属性但保留 id，所以从任何一封已发出的邮件都能看出这份签名是怎么生成的。
+ */
+function containerId(p) {
+  const trace = String(p.trace || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 90);
+  return "acs-signature" + (trace ? "-" + trace : "");
+}
+
 /** 团队版签名里的团队名（共享邮箱发信时才有）：比职位颜色深，一眼能看出是哪个团队 */
 function teamHtml(cfg, team) {
   return '<b style="color:' + cfg.colors.text + ';">' + escapeHtml(team) + "</b>";
@@ -126,7 +135,7 @@ export function buildFullSignature(p, cfg, imageSrc) {
   const disclaimer = disclaimerHtml(cfg);
   const hasDisclaimer = !!disclaimer;
 
-  let html = '<div id="acs-signature" data-acs-sig="full">';
+  let html = '<div id="' + containerId(p) + '" data-acs-sig="full">';
   html += signOffHtml(cfg);
   html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">';
   html += "<tr>";
@@ -226,7 +235,7 @@ export function buildShortSignature(p, cfg, imageSrc) {
   const showMark = !!(imageSrc && corner && cfg.markInShort);
   const o = cfg.markShortOffset || { right: 0, bottom: 14 };
 
-  let html = '<div id="acs-signature" data-acs-sig="short">';
+  let html = '<div id="' + containerId(p) + '" data-acs-sig="short">';
   if (cfg.signOffInShort) html += signOffHtml(cfg);
   html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>';
   html += '<td style="border-left:3px solid ' + c.accent + ';padding:1px 0 1px 10px;font-family:' + f + ";font-size:12px;line-height:19px;color:" + c.muted + ';">';

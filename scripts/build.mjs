@@ -25,10 +25,12 @@ if (u.pathname && u.pathname !== "/") {
 if (/^0{8}-/.test(clientId)) console.warn("⚠️  clientId 还是占位符，请在 addin.config.json 中填入 Entra 应用的 Application (client) ID");
 
 // ---- 生成模块 ----
+// build：这份代码对应的提交（GitHub Actions 发布时自动带上），写进签名的排查标记里
+const buildId = String(process.env.GITHUB_SHA || "").slice(0, 7) || "dev";
 fs.mkdirSync(gen, { recursive: true });
 fs.writeFileSync(
   path.join(gen, "addin.js"),
-  "// 自动生成，勿改\nexport const ADDIN = " + JSON.stringify({ baseUrl, clientId, tenantId, version: cfg.version }, null, 2) + ";\n"
+  "// 自动生成，勿改\nexport const ADDIN = " + JSON.stringify({ baseUrl, clientId, tenantId, version: cfg.version, build: buildId }, null, 2) + ";\n"
 );
 const images = {};
 for (const [key, img] of Object.entries(SIGNATURE_CONFIG.images)) {
