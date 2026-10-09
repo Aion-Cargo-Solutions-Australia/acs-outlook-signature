@@ -88,8 +88,12 @@ async function sessionSet(key, value) {
   }
 }
 
-/** 当前邮件的发件人 (From) 地址，小写。读不到时退回登录邮箱 */
-export async function getFromAddress() {
+/**
+ * 当前邮件的发件人 (From)。
+ * @returns {{address:string, source:"from"|"mailbox"}} address 小写；source 说明地址是怎么拿到的：
+ *   "from" = 读到了发件人栏，"mailbox" = 读不到发件人栏，退回当前邮箱的地址
+ */
+export async function getFrom() {
   const it = item();
   let from = "";
   if (it.from && it.from.getAsync) {
@@ -100,16 +104,23 @@ export async function getFromAddress() {
       log("from.getAsync failed", e && e.message);
     }
   }
-  return String(from || fallbackUser().emailAddress || "").toLowerCase();
+  return {
+    address: String(from || fallbackUser().emailAddress || "").toLowerCase(),
+    source: from ? "from" : "mailbox",
+  };
 }
 
 /**
  * 按发件人决定签名里用谁的资料：From 是 config.js 里登记的共享邮箱 → 团队版，否则是本人。
+ * 结果里的 trace 是排查用的标记（代码版本 + 判断结果 + 当时看到的发件人），会写进签名容器的 id。
  * @param {object} profile loadProfile 得到的本人资料
  */
 export async function resolveSender(profile) {
-  const box = findSharedMailbox(await getFromAddress(), CFG);
-  return box ? teamProfile(profile, box, CFG) : profile;
+  const from = await getFrom();
+  const box = findSharedMailbox(from.address, CFG);
+  const sender = box ? teamProfile(profile, box, CFG) : Object.assign({}, profile);
+  sender.trace = [ADDIN.build, box ? "team" : "personal", from.source, from.address].join(" ");
+  return sender;
 }
 
 /**

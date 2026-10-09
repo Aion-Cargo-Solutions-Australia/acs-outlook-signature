@@ -38,6 +38,8 @@ async function load(allowPopup) {
   renderProfile(state.profile);
   state.sender = await resolveSender(state.profile);
   const team = state.sender.shared ? "共享邮箱 " + state.sender.email + " → 团队签名。" : "";
+  // 排查用：代码版本 / 判断结果 / 发件人来源 / 加载项看到的发件人
+  $("trace").textContent = state.sender.trace || "";
   try {
     const d = await decideVariant(state.sender, state.token, { reapply: true });
     state.variant = d.variant;

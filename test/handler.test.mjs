@@ -145,3 +145,10 @@ test("a colleague's cached profile (shared mailbox settings) is not used for the
   const { calls } = await run({ composeType: "newMail", settings });
   assert.ok(calls.signature.includes("Ivy Hu") && !calls.signature.includes("Someone Else"));
 });
+
+test("the signature container id records build, decision and the From the add-in saw", async () => {
+  const team = await run({ composeType: "newMail", from: "AU.Accounts@aioncargo.com" });
+  assert.match(team.calls.signature, /<div id="acs-signature-[a-z0-9]+-team-from-au-accounts-aioncargo-com" data-acs-sig="full">/);
+  const personal = await run({ composeType: "reply", sent: true });
+  assert.match(personal.calls.signature, /<div id="acs-signature-[a-z0-9]+-personal-from-ivy-hu-aioncargo-com" data-acs-sig="short">/);
+});
