@@ -32,6 +32,26 @@ export const SIGNATURE_CONFIG = {
   // 精简签名是否在公司名称后显示澳洲公司地址
   showAddressInShort: true,
 
+  /**
+   * 共享邮箱（团队邮箱）：发件人 (From) 是下面某个地址时，自动改用团队版签名 ——
+   * 发件人姓名 + 团队名 + 团队电话 / 分机 + 团队邮箱，默认不显示个人手机。
+   *  - addresses ：这个邮箱的全部地址（不区分大小写）。第一个显示在签名里，其余只用来识别发件人；
+   *                Exchange 里的主地址和别名都要写上，否则用另一个地址发信时识别不到
+   *  - team      ：签名里显示的团队名
+   *  - phone/ext ：团队电话和分机
+   *  - showMobile：设为 true 时，这个团队的签名也显示发件人本人的手机
+   * 不在这张表里的共享邮箱，签名仍然是发件人本人的。新增 / 修改团队：改这里 → 提交即可，不需要重新上传 manifest。
+   */
+  sharedMailboxes: [
+    { addresses: ["accounts@aioncargo.com.au", "au.accounts@aioncargo.com"], team: "ACS AU Accounts", phone: "+61 2 9160 2300", ext: "820" },
+    { addresses: ["admin@aioncargo.com.au", "au.admin@aioncargo.com"], team: "ACS AU Admin", phone: "+61 2 9160 2300", ext: "602" },
+    { addresses: ["customercare@aioncargo.com.au", "au.customercare@aioncargo.com"], team: "ACS AU Customer Care", phone: "+61 2 9160 2300", ext: "601" },
+    { addresses: ["exportair@aioncargo.com.au", "au.exportair@aioncargo.com"], team: "ACS AU Export Air", phone: "+61 2 9160 2300", ext: "822" },
+    { addresses: ["exportsea@aioncargo.com.au", "au.exportsea@aioncargo.com"], team: "ACS AU Export Sea", phone: "+61 2 9160 2300", ext: "822" },
+    { addresses: ["importair@aioncargo.com.au", "au.importair@aioncargo.com"], team: "ACS AU Import Air", phone: "+61 2 9160 2300", ext: "821" },
+    { addresses: ["importsea@aioncargo.com.au", "au.importsea@aioncargo.com"], team: "ACS AU Import Sea", phone: "+61 2 9160 2300", ext: "821" },
+  ],
+
   // 分机号来源：先从 Entra "办公电话" 里解析（如 "+61 2 9160 2300 EXT 601" / "x601"），
   // 解析不到再读这个扩展属性（Exchange 自定义属性 1 = extensionAttribute1）
   extensionAttribute: "extensionAttribute1",
@@ -85,6 +105,7 @@ export const SIGNATURE_CONFIG = {
    * - 新邮件：完整签名
    * - 回复：如果本人在这个邮件会话里还没发过邮件 → 完整签名；已经发过 → 精简签名
    * - 转发：forwardAlwaysFull=true 时始终用完整签名（转给新的人通常需要完整联系方式）
+   * - 共享邮箱回复：引用的历史邮件里已经有这个团队的签名 → 精简签名，否则完整签名（不看是谁发的）
    */
   forwardAlwaysFull: true,
 

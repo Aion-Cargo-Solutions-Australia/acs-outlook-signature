@@ -28,17 +28,27 @@ export function isNaaSupported() {
   }
 }
 
+let signedIn = "";
+
+/** 最近一次取到 token 的登录账号（小写）；还没取到时为 "" */
+export function signedInUser() {
+  return signedIn;
+}
+
+function remember(result) {
+  signedIn = String((result.account && result.account.username) || "").toLowerCase();
+  return result.accessToken;
+}
+
 /** 静默取 token（事件处理器里只能静默）。allowPopup=true 仅在任务窗格中使用。 */
 export async function getToken(allowPopup) {
   const pca = await getPca();
   const request = { scopes: SCOPES };
   try {
-    const r = await pca.acquireTokenSilent(request);
-    return r.accessToken;
+    return remember(await pca.acquireTokenSilent(request));
   } catch (silentError) {
     if (!allowPopup) throw silentError;
-    const r = await pca.acquireTokenPopup(request);
-    return r.accessToken;
+    return remember(await pca.acquireTokenPopup(request));
   }
 }
 

@@ -73,6 +73,13 @@ function extHtml(cfg, ext) {
   return '<span style="color:' + cfg.colors.muted + ';">Ext.</span>&nbsp;' + escapeHtml(ext);
 }
 
+/** 团队版签名里的团队名（共享邮箱发信时才有）：比职位颜色深，一眼能看出是哪个团队 */
+function teamHtml(cfg, team) {
+  return '<b style="color:' + cfg.colors.text + ';">' + escapeHtml(team) + "</b>";
+}
+
+const SEP = '<span style="color:#c8c8c8;">&nbsp;|&nbsp;</span>';
+
 function link(cfg, href, text, color, underline) {
   return '<a href="' + escapeHtml(href) + '" style="color:' + (color || cfg.colors.link) + ";text-decoration:" + (underline ? "underline" : "none") + ';">' + escapeHtml(text) + "</a>";
 }
@@ -81,7 +88,7 @@ function link(cfg, href, text, color, underline) {
  * 完整签名
  *  ┌────────────┬──────────────────────────────┐
  *  │            │ Name                         │
- *  │  ACS Logo  │ Title                        │
+ *  │  ACS Logo  │ Title | Team（团队版才有）     │
  *  │ (与右侧等高)│ Mobile / Tel / Email / Web / │
  *  │            │ Address                      │
  *  ├────────────┴──────────────────────────────┤  ← 细分隔线（与上方同宽）
@@ -141,9 +148,10 @@ export function buildFullSignature(p, cfg, imageSrc) {
   } else {
     html += nameHtml;
   }
-  if (cfg.showTitleInFull && p.jobTitle) {
+  const subtitle = [cfg.showTitleInFull && p.jobTitle ? plain(p.jobTitle) : "", p.team ? teamHtml(cfg, p.team) : ""].filter(Boolean);
+  if (subtitle.length) {
     html += '<div style="font-family:' + f + ";font-size:" + s.title + "px;line-height:" + (s.title + 4) + "px;color:" + c.muted + ';padding:1px 0 0 0;">' +
-      plain(p.jobTitle) + "</div>";
+      subtitle.join(SEP) + "</div>";
   }
   html += '<div style="height:7px;line-height:7px;font-size:1px;">&nbsp;</div>';
   const rowsHtml = '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">' + rows.join("") + "</table>";
@@ -188,6 +196,7 @@ export function buildFullSignature(p, cfg, imageSrc) {
 
 /**
  * 精简签名：三行 + 底部一行小字免责声明。用于同一会话中本人第二次及以后的回复。
+ * 团队版（共享邮箱）在姓名后加团队名，并在电话后加团队邮箱。
  * markInShort=true 时，淡化的 1/4 圆环会压在网址那一行附近（经典 Outlook 自动隐藏）。
  * @param {(key:string)=>string} [imageSrc] 圆环图片地址；不传则不显示圆环
  */
@@ -195,20 +204,22 @@ export function buildShortSignature(p, cfg, imageSrc) {
   const c = cfg.colors;
   const f = cfg.fontFamily;
   const co = cfg.company;
-  const sep = '<span style="color:#c8c8c8;">&nbsp;|&nbsp;</span>';
 
   const line1 = '<b style="font-size:14px;color:' + c.text + ';">' + escapeHtml(p.displayName) + "</b>" +
-    (cfg.showTitleInShort && p.jobTitle ? sep + '<span style="color:' + c.muted + ';">' + escapeHtml(p.jobTitle) + "</span>" : "");
+    (cfg.showTitleInShort && p.jobTitle ? SEP + '<span style="color:' + c.muted + ';">' + escapeHtml(p.jobTitle) + "</span>" : "") +
+    (p.team ? SEP + teamHtml(cfg, p.team) : "");
 
   const addr = co.address;
   const line2 = '<b style="color:' + c.accent + ';">' + escapeHtml(co.shortName) + "</b>&nbsp;" +
     '<span style="color:' + c.text + ';">' + escapeHtml(co.name) + "</span>" +
-    (cfg.showAddressInShort && addr ? sep + '<span style="color:' + c.muted + ';">' + escapeHtml(addr) + "</span>" : "");
+    (cfg.showAddressInShort && addr ? SEP + '<span style="color:' + c.muted + ';">' + escapeHtml(addr) + "</span>" : "");
 
   const L = cfg.labels;
   const parts = [];
   if (p.mobile) parts.push('<b style="color:' + c.label + ';">' + escapeHtml(L.mobile) + "</b>&nbsp;" + escapeHtml(p.mobile));
   if (p.phone) parts.push('<b style="color:' + c.label + ';">' + escapeHtml(L.phone) + "</b>&nbsp;" + escapeHtml(p.phone) + (p.ext ? "&nbsp;&nbsp;" + extHtml(cfg, p.ext) : ""));
+  // 团队版带上团队邮箱：客户从哪一封回复都能找到团队地址
+  if (p.shared && p.email) parts.push('<b style="color:' + c.label + ';">' + escapeHtml(L.email) + "</b>&nbsp;" + link(cfg, "mailto:" + p.email, p.email));
   if (co.website) parts.push(link(cfg, co.websiteUrl || "https://" + co.website, co.website));
 
   const corner = cfg.images.markCorner;
@@ -221,7 +232,7 @@ export function buildShortSignature(p, cfg, imageSrc) {
   html += '<td style="border-left:3px solid ' + c.accent + ';padding:1px 0 1px 10px;font-family:' + f + ";font-size:12px;line-height:19px;color:" + c.muted + ';">';
   // 圆环用 CSS 背景图（不占位，手机上也不会把排版挤乱）
   if (showMark) html += '<div style="' + markBackgroundCss(cfg, corner, imageSrc, o) + '">';
-  html += line1 + "<br/>" + line2 + "<br/>" + parts.join(sep);
+  html += line1 + "<br/>" + line2 + "<br/>" + parts.join(SEP);
   const disclaimer = disclaimerHtml(cfg);
   if (disclaimer) {
     html += '<div style="padding:6px 0 0 0;font-size:10px;line-height:14px;color:' + c.footer + ';">' + disclaimer + "</div>";
