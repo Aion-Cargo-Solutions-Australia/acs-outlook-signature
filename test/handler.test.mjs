@@ -23,7 +23,7 @@ const text = (html) => String(html || "").replace(/<[^>]+>/g, " ").replace(/&nbs
  * 正文 = 引用的历史邮件 + 加载项当前插入的签名（和真实 Outlook 一样，签名插入后会出现在正文里）。
  */
 function compose({ composeType, sent = false, tokenFail = false, body = "", from, mailbox, settings = {}, me = IVY }) {
-  const calls = { attachments: [], signature: null, disabled: false, notices: 0 };
+  const calls = { attachments: [], signature: null, disabled: false, notices: 0, headers: {} };
   const session = {};
   const handlers = {};
   const state = { from: from || "ivy.hu@aioncargo.com" };
@@ -43,6 +43,7 @@ function compose({ composeType, sent = false, tokenFail = false, body = "", from
     getAttachmentsAsync: (cb) => cb(ok(calls.attachments.map((name) => ({ name, isInline: true })))),
     disableClientSignatureAsync: (cb) => { calls.disabled = true; cb(ok()); },
     addFileAttachmentFromBase64Async: (b64, name, o, cb) => { calls.attachments.push(name); cb(ok("id")); },
+    internetHeaders: { setAsync: (h, cb) => { Object.assign(calls.headers, h); cb(ok()); } },
     notificationMessages: { addAsync: () => { calls.notices++; } },
   };
   const Office = {
@@ -185,4 +186,16 @@ test("New Zealand office (Entra officeLocation Auckland) → NZ details, only th
   const { calls } = await run({ composeType: "newMail", from: "ivan.qiu@aioncargo.com", me });
   for (const s of ["Ivan Qiu", ">DDI<", "+64 9 254 4907", "Airpark Drive"]) assert.ok(calls.signature.includes(s), "missing " + s);
   assert.deepEqual(calls.attachments, ["acs-logo.png", "iata-badge.png", "cbaff-badge.png", "wca-nz-badge.png"]); // 不带澳洲 WCA 徽章（会员号 152015）
+});
+
+test("every inserted signature is flagged in a message header for the Exchange fallback rule", async () => {
+  const team = await run({ composeType: "newMail", from: "importair@aioncargo.com.au" });
+  assert.equal(team.calls.headers["X-ACS-Signature"], "inserted team full");
+  const personal = await run({ composeType: "reply", sent: true });
+  assert.equal(personal.calls.headers["X-ACS-Signature"], "inserted personal short");
+  // 切换发件人后标记跟着更新
+  const c = await run({ composeType: "newMail" });
+  c.setFrom("au.exportsea@aioncargo.com");
+  await c.fire("onMessageFromChangedHandler");
+  assert.equal(c.calls.headers["X-ACS-Signature"], "inserted team full");
 });

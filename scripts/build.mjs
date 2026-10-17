@@ -9,6 +9,7 @@ const dist = path.join(root, "dist");
 const gen = path.join(root, "src", "generated");
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "addin.config.json"), "utf8"));
 const { SIGNATURE_CONFIG } = await import(pathToFileURL(path.join(root, "src", "config.js")).href);
+const { renderRulesScript, renderMobilePage } = await import(pathToFileURL(path.join(root, "src", "shared", "fallback.js")).href);
 
 // ---- 校验 ----
 const baseUrl = String(process.env.ADDIN_BASE_URL || cfg.baseUrl).replace(/\/+$/, "");
@@ -70,6 +71,10 @@ fs.writeFileSync(
 );
 fs.writeFileSync(path.join(dist, "manifest.xml"), sub(fs.readFileSync(path.join(root, "manifest.template.xml"), "utf8")));
 fs.writeFileSync(path.join(dist, ".nojekyll"), "");
+// 共享邮箱兜底：Exchange 规则脚本 + 手机签名页（都由 config.js 的 sharedMailboxes 生成，改团队信息后自动更新）
+fs.mkdirSync(path.join(dist, "exchange"), { recursive: true });
+fs.writeFileSync(path.join(dist, "exchange", "fallback-rules.ps1"), renderRulesScript(SIGNATURE_CONFIG));
+fs.writeFileSync(path.join(dist, "mobile-signatures.html"), renderMobilePage(SIGNATURE_CONFIG));
 if (u.hostname && !u.hostname.endsWith("github.io")) fs.writeFileSync(path.join(dist, "CNAME"), u.hostname + "\n");
 fs.writeFileSync(path.join(dist, "index.html"), '<!doctype html><meta charset="utf-8"><title>ACS Signature</title><p>ACS Outlook signature add-in. <a href="manifest.xml">manifest.xml</a></p>');
 
