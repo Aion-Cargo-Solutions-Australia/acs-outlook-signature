@@ -6,6 +6,7 @@ import { activeBanner, buildFullSignature, buildShortSignature } from "./signatu
 import { bodyHasOwnSignature, configForOffice, findSharedMailbox, normalizeProfile, teamProfile } from "./profile.js";
 import { fetchMe, getToken, hasSentInConversation, signedInUser } from "./graph.js";
 import { readCachedProfile, isFresh, saveCachedProfile } from "./cache.js";
+import { SIGNATURE_HEADER } from "./header.js";
 
 function asPromise(fn) {
   return new Promise((resolve, reject) => {
@@ -276,7 +277,7 @@ export async function applySignature(variant, profile, opts) {
       log("disableClientSignature failed", e && e.message);
     }
   }
-  const mode = CFG.imageMode;
+  let mode = CFG.imageMode;
   if (mode === "embed") {
     const have = opts && opts.reapply ? await embeddedImages() : [];
     const added = [];
@@ -288,12 +289,30 @@ export async function applySignature(variant, profile, opts) {
         added.push(IMAGES[k].cid);
       } catch (e) {
         log("inline image failed, fallback to link", k, e && e.message);
-        return applyHtml(buildHtml(variant, profile, "link"));
+        mode = "link";
+        break;
       }
     }
     if (added.length) await sessionSet(EMBEDDED_KEY, have.concat(added).join(","));
   }
-  return applyHtml(buildHtml(variant, profile, mode));
+  await applyHtml(buildHtml(variant, profile, mode));
+  await flagInserted(variant, profile);
+}
+
+/**
+ * 在邮件头里标记“加载项已经插入了签名”。Exchange 的兜底规则（exchange/fallback-rules.ps1）看到这个头就不再追加团队信息；
+ * 加载项没运行的场景（手机、单独打开的共享邮箱等）没有这个头，由服务器补上。
+ */
+async function flagInserted(variant, profile) {
+  const it = item();
+  if (!it.internetHeaders || !it.internetHeaders.setAsync) return;
+  const headers = {};
+  headers[SIGNATURE_HEADER] = "inserted " + (profile.shared ? "team" : "personal") + " " + variant;
+  try {
+    await withTimeout(asPromise((cb) => it.internetHeaders.setAsync(headers, cb)), 3000, "internetHeaders");
+  } catch (e) {
+    log("internetHeaders.setAsync failed", e && e.message);
+  }
 }
 
 function applyHtml(html) {

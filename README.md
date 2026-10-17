@@ -275,6 +275,29 @@ Update-MgUser -UserId ivy.hu@aioncargo.com `
 
 `addresses` 要写全这个邮箱在 Exchange 里的**主地址和所有别名**：第一个显示在签名里，其余只用来识别发件人。漏写的话，用那个地址发信时出来的还是个人签名。
 
+### 兜底：手机和加载项没运行的场景
+
+Outlook 手机版不运行加载项；共享邮箱在网页版里单独打开时，加载项也可能不运行。这两种情况分两层补上：
+
+**1. 服务器兜底（Exchange 邮件流规则）**：共享邮箱发出的邮件如果没有加载项签名，Exchange 在**整封邮件的最末尾**追加团队信息（团队名、电话分机、团队邮箱、网址、地址、免责声明，没有发件人姓名）。回复或转发时，它在所有引用的历史邮件之后。
+
+- 加载项插入签名时会给邮件加一个头 `X-ACS-Signature`，规则看到它就跳过
+- 邮件里已经有“团队名 | Aion Cargo Solutions”这一行（手机签名，或同一个 chain 里之前追加过）也跳过，不会叠加
+- 节日横幅期间（`images.banner` 未到 `until`），脚本里多一条 `ACS signature fallback - holiday notice`：在团队信息下面追加文字版放假安排（横幅图片放不进服务器规则）。这条规则带到期时间，到 `until` 自动停止；手机签名不会挡住它
+- 规则脚本由 `config.js` 自动生成，发布在 https://sig.breezefreight.com/exchange/fallback-rules.ps1
+
+安装或更新（Exchange 管理员，Windows PowerShell 或 PowerShell 7 都可以）：
+
+```powershell
+Install-Module ExchangeOnlineManagement -Scope CurrentUser   # 第一次需要
+Connect-ExchangeOnline
+.\fallback-rules.ps1                                         # 可以重复运行，已有规则会被更新
+```
+
+改了 `sharedMailboxes`（新增团队、改分机）后，等网站发布完成，重新下载并运行一次脚本。规则在 Exchange 管理中心 → 邮件流 → 规则 里能看到，名字是 `ACS signature fallback - <团队名>`。
+
+**2. 手机签名**：员工在 Outlook 手机版里给共享邮箱账户设一次文字签名，位置正确（紧跟回复文字）。在手机上打开 https://sig.breezefreight.com/mobile-signatures.html ，复制自己团队那一段，按页面上的步骤粘贴。“团队名 | Aion Cargo Solutions”这一行不要改，服务器靠它判断已经有签名。
+
 **不要把共享邮箱加进“集成应用”的分配用户里。** 加载项只部署给人（用户自己的邮箱），用户用共享邮箱发信时会自动带上。另外共享邮箱不要从通讯录 (GAL) 隐藏，否则加载项在这个邮箱里读不到邮件。
 
 ---
@@ -330,7 +353,8 @@ Update-MgUser -UserId ivy.hu@aioncargo.com `
 
 - 打开已有草稿时不会自动插入签名（Outlook 的设计），需要的话可以在面板里手动插入
 - iOS 上通过“共享”新建的邮件不会触发
-- Outlook 手机版（iOS / Android）不支持在共享邮箱里运行加载项：用手机从共享邮箱发信不会自动带签名
+- Outlook 手机版（iOS / Android）不支持在共享邮箱里运行加载项：手机发信靠手机签名和服务器兜底（见“兜底：手机和加载项没运行的场景”）
+- 服务器兜底只能加在整封邮件的最顶部或最底部，回复时会在引用内容之后
 - 没有登记在 `sharedMailboxes` 里的共享邮箱，以及“代表另一位同事发送”，签名仍然是当前登录用户的
 - 只处理邮件，不处理会议邀请
 - **breezefreight.com 必须长期续费、DNS 必须保持不变**，否则全公司的签名都会失效。换域名时要按步骤 2–7 重新做一遍（包括在 Entra 里改重定向 URI）
@@ -354,6 +378,7 @@ src/config.js                ★ 公司信息、共享邮箱团队信息与签�
 src/assets/                  ★ Logo、徽章、按钮图标
 src/shared/signature.js      完整签名 / 精简签名 HTML 模板
 src/shared/profile.js        Entra 资料标准化、分机解析、共享邮箱识别、会话判断
+src/shared/fallback.js       共享邮箱兜底：Exchange 规则脚本、手机签名页
 src/shared/graph.js          NAA 单点登录 + Microsoft Graph
 src/shared/office.js         读取发件人、判断签名类型、插入签名
 src/launchevent/             事件入口（新建 / 回复 / 转发时插入，切换发件人时替换）
