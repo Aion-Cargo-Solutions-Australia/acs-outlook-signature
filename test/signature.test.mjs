@@ -66,6 +66,13 @@ test("disclaimer is a single line", () => {
   assert.ok(m && !/<br/i.test(m[0]));
 });
 
+test("full signature uses no colspan: the wide disclaimer below must not stretch the logo column in Word", () => {
+  const sh = normalizeProfile({ displayName: "A B", officeLocation: "Shanghai" }, CFG, {});
+  for (const [p, cfg] of [[normalizeProfile(me, CFG, {}), CFG], [sh, configForOffice(sh.office, CFG)]]) {
+    assert.ok(!buildFullSignature(p, cfg, src).includes("colspan"));
+  }
+});
+
 test("full signature omits empty rows", () => {
   const html = buildFullSignature(normalizeProfile({ displayName: "No Mobile", mail: "n@aioncargo.com" }, CFG, {}), CFG, src);
   assert.ok(!html.includes(">Mobile<"));

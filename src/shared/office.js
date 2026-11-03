@@ -139,7 +139,10 @@ export async function loadProfile(allowPopup) {
   }
   // 共享邮箱在单独的窗口 / 账户里打开时，缓存可能存在共享邮箱里，是同事留下的 → 不是本人的缓存不用
   const user = signedInUser();
-  if (cached && user && cached.profile.upn && cached.profile.upn !== user) cached = null;
+  // 拿不到 token 时没有登录身份，改用当前邮箱账户核对（UPN 可能和邮箱不同，两个都比）
+  const owner = String(fallbackUser().emailAddress || "").toLowerCase();
+  const isMine = (p) => (user ? p.upn === user : !owner || p.upn === owner || p.email === owner);
+  if (cached && cached.profile.upn && !isMine(cached.profile)) cached = null;
 
   if (token && (!isFresh(cached) || allowPopup)) {
     try {

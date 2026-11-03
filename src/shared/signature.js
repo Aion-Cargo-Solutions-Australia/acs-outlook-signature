@@ -137,8 +137,9 @@ export function buildFullSignature(p, cfg, imageSrc) {
 
   let html = '<div id="' + containerId(p) + '" data-acs-sig="full">';
   html += signOffHtml(cfg);
+  // Logo + 联系方式放在独立的内层表格：用 colspan 和下方的免责声明共用列时，Word 引擎（经典 Outlook）会把多余宽度分给 Logo 列
   html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">';
-  html += "<tr>";
+  html += '<tr><td style="padding:0;"><table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>';
 
   // 左列：Logo，垂直居中
   if (logo) {
@@ -182,12 +183,12 @@ export function buildFullSignature(p, cfg, imageSrc) {
   } else {
     html += rowsHtml;
   }
-  html += "</td></tr>";
+  html += "</td></tr></table></td></tr>";
 
   // 底部（跨两列，与上方同宽）：细分隔线 + WCA 徽章 + 一行免责声明 +（可选）品牌圆环
   const markInFooter = mark && cfg.markPosition === "footer";
   if (hasDisclaimer || badge || markInFooter) {
-    html += '<tr><td colspan="' + (logo ? 2 : 1) + '" style="padding:11px 0 0 0;">';
+    html += '<tr><td style="padding:11px 0 0 0;">';
     html += '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>';
     html += '<td style="border-top:1px solid ' + c.hairline + ';padding:8px 0 0 0;">';
     html += '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>';
