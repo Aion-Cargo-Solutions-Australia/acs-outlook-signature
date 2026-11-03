@@ -17,7 +17,7 @@ const text = (html) => String(html || "").replace(/<[^>]+>/g, " ").replace(/&nbs
  * 模拟一封正在撰写的邮件。fire(name) 触发 manifest 里登记的事件；
  * 正文 = 引用的历史邮件 + 加载项当前插入的签名（和真实 Outlook 一样，签名插入后会出现在正文里）。
  */
-function compose({ composeType, sent = false, tokenFail = false, body = "", from, mailbox, settings = {} }) {
+function compose({ composeType, sent = false, tokenFail = false, body = "", from, mailbox, settings = {}, me = IVY }) {
   const calls = { attachments: [], signature: null, disabled: false, notices: 0 };
   const session = {};
   const handlers = {};
@@ -51,7 +51,7 @@ function compose({ composeType, sent = false, tokenFail = false, body = "", from
     },
   };
   const ctx = vm.createContext({ Office, console: { log() {} }, setTimeout, clearTimeout,
-    __MOCK: { sent, tokenFail, me: IVY, user: IVY.userPrincipalName } });
+    __MOCK: { sent, tokenFail, me, user: me.userPrincipalName } });
   vm.runInContext(bundle, ctx);
   return {
     calls, mock: ctx.__MOCK, settings,
@@ -151,4 +151,12 @@ test("the signature container id records build, decision and the From the add-in
   assert.match(team.calls.signature, /<div id="acs-signature-[a-z0-9]+-team-from-au-accounts-aioncargo-com" data-acs-sig="full">/);
   const personal = await run({ composeType: "reply", sent: true });
   assert.match(personal.calls.signature, /<div id="acs-signature-[a-z0-9]+-personal-from-ivy-hu-aioncargo-com" data-acs-sig="short">/);
+});
+
+test("Shanghai office (Entra officeLocation) → Shanghai company details in the inserted signature", async () => {
+  const me = { displayName: "闾震涛 Leon", jobTitle: "Branch Manager", mail: "leon.lv@aioncargo.com", userPrincipalName: "leon.lv@aioncargo.com", officeLocation: "Shanghai", mobilePhone: "+86 18616172470" };
+  const { calls } = await run({ composeType: "newMail", from: "leon.lv@aioncargo.com", me });
+  for (const s of ["闾震涛 Leon", "艾朗国际物流（上海）有限公司", "+86 21 65050600", "ACS-Terms-and-Conditions.pdf"]) assert.ok(calls.signature.includes(s), "missing " + s);
+  assert.ok(!calls.signature.includes("Pyrmont"));
+  assert.deepEqual(calls.attachments, ["acs-logo.png"]); // 不内嵌 WCA 徽章
 });

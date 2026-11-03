@@ -20,6 +20,21 @@ export function splitExtension(raw) {
 }
 
 /**
+ * 按 Entra "办公室"(officeLocation) 选办公室设置（config.js offices），合并到默认设置上；匹配不到返回默认设置本身。
+ * shortcut: 读不到 Graph 资料（没登录 / 没有缓存）时没有办公室信息，会退回默认（澳洲）设置。
+ */
+export function configForOffice(office, cfg) {
+  const o = String(office || "").toLowerCase();
+  const hit = o && (cfg.offices || []).find((x) => (x.match || []).some((m) => o.indexOf(String(m).toLowerCase()) !== -1));
+  if (!hit) return cfg;
+  return Object.assign({}, cfg, hit, {
+    company: Object.assign({}, cfg.company, hit.company),
+    labels: Object.assign({}, cfg.labels, hit.labels),
+    images: Object.assign({}, cfg.images, hit.images),
+  });
+}
+
+/**
  * @param {object} me  Graph /me 返回（可能为 null）
  * @param {object} cfg SIGNATURE_CONFIG
  * @param {object} fallback { displayName, emailAddress } —— 来自 Office.context.mailbox.userProfile
@@ -27,6 +42,8 @@ export function splitExtension(raw) {
 export function normalizeProfile(me, cfg, fallback) {
   me = me || {};
   fallback = fallback || {};
+  // 总机号码按办公室取
+  cfg = configForOffice(me.officeLocation, cfg);
   const bp = (me.businessPhones && me.businessPhones[0]) || "";
   const split = splitExtension(bp);
   let ext = split.ext;
@@ -44,6 +61,8 @@ export function normalizeProfile(me, cfg, fallback) {
     mobile: (me.mobilePhone || "").trim(),
     phone: split.number || (cfg.company && cfg.company.mainPhone) || "",
     ext: ext || "",
+    // Entra "办公室"：决定用哪个办公室的公司信息（见 configForOffice）
+    office: (me.officeLocation || "").trim(),
     // 不读取 Entra 的街道地址（通常是员工住址），签名统一使用公司地址
     address: "",
     source: me.displayName ? "graph" : "fallback",

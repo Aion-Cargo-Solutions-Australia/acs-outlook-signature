@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { SIGNATURE_CONFIG as CFG } from "../src/config.js";
 import { buildFullSignature, buildShortSignature, escapeHtml } from "../src/shared/signature.js";
-import { normalizeProfile, splitExtension, bodyHasOwnSignature, findSharedMailbox, teamProfile } from "../src/shared/profile.js";
+import { normalizeProfile, splitExtension, bodyHasOwnSignature, findSharedMailbox, teamProfile, configForOffice } from "../src/shared/profile.js";
 
 const me = {
   displayName: "Ivy Hu", jobTitle: "Managing Director - Australia", mail: "Ivy.Hu@aioncargo.com",
@@ -62,7 +62,7 @@ test("stale cached profile with a personal address never shows it", () => {
 
 test("disclaimer is a single line", () => {
   const html = buildFullSignature(normalizeProfile(me, CFG, {}), CFG, src);
-  const m = html.match(/This email is subject to our.*?<\/td>/);
+  const m = html.match(/including any ACS AU quotation.*?<\/td>/);
   assert.ok(m && !/<br/i.test(m[0]));
 });
 
@@ -154,4 +154,36 @@ test("thread detection: team signature is recognised by the team mailbox only", 
   const t = teamProfile(normalizeProfile(me, CFG, {}), { ...findSharedMailbox("accounts@aioncargo.com.au", CFG), showMobile: true }, CFG);
   assert.equal(bodyHasOwnSignature("Kind regards,\nZora Zhang\nACS AU Accounts\nEmail accounts@aioncargo.com.au", t), true);
   assert.equal(bodyHasOwnSignature("Kind regards,\nIvy Hu\nMobile +61 425 666 802\nEmail ivy.hu@aioncargo.com", t), false);
+});
+
+const LEON = {
+  displayName: "闾震涛 Leon", jobTitle: "Branch Manager", mail: "Leon.lv@aioncargo.com", officeLocation: "Shanghai",
+  mobilePhone: "+86 18616172470", businessPhones: [],
+};
+
+test("configForOffice: Entra office picks the office settings, anything else keeps the defaults", () => {
+  for (const office of ["Shanghai", "SHANGHAI 813", "上海"]) assert.equal(configForOffice(office, CFG).company.mainPhone, "+86 21 65050600", office);
+  for (const office of ["Sydney", "", null, undefined]) assert.equal(configForOffice(office, CFG), CFG);
+  // 只覆盖写了的字段：标签、网址、Logo 沿用默认
+  const sh = configForOffice("Shanghai", CFG);
+  assert.equal(sh.labels.mobile, CFG.labels.mobile);
+  assert.equal(sh.company.website, CFG.company.website);
+  assert.equal(sh.images.logo, CFG.images.logo);
+  assert.equal(sh.images.badge, null); // 上海暂不放 WCA 徽章
+  assert.ok(CFG.images.badge);
+});
+
+test("Shanghai signature: Chinese entity, Shanghai address and phone, its own T&C; no Australian details", () => {
+  const p = normalizeProfile(LEON, CFG, {});
+  assert.equal(p.phone, "+86 21 65050600");
+  const cfg = configForOffice(p.office, CFG);
+  const full = buildFullSignature(p, cfg, src);
+  const short = buildShortSignature(p, cfg, src);
+  for (const s of ["闾震涛 Leon", "Branch Manager", "艾朗国际物流（上海）有限公司", "上海市虹口区衡水路151号前海人寿大厦813室", "+86 18616172470",
+    "+86 21 65050600", ">Website<", "ACS-Terms-and-Conditions.pdf", "is subject to ACS <a", "Microsoft YaHei", "cid:logo.png"]) assert.ok(full.includes(s), "full missing " + s);
+  assert.ok(!full.includes("cid:badge.png"));
+  for (const s of ["艾朗国际物流（上海）有限公司", "上海市虹口区衡水路151号前海人寿大厦813室", "ACS-Terms-and-Conditions.pdf"]) assert.ok(short.includes(s), "short missing " + s);
+  for (const s of ["Pyrmont", "+61", "au-tc", "maps.google", "ACS AU"]) assert.ok(!full.includes(s) && !short.includes(s), "should not contain " + s);
+  // 澳洲签名不显示公司名这一行
+  assert.ok(!buildFullSignature(normalizeProfile(me, CFG, {}), CFG, src).includes(">Aion Cargo Solutions</div>"));
 });
