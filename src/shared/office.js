@@ -3,7 +3,7 @@ import { SIGNATURE_CONFIG as CFG } from "../config.js";
 import { IMAGES } from "../generated/images.js";
 import { ADDIN } from "../generated/addin.js";
 import { buildFullSignature, buildShortSignature } from "./signature.js";
-import { bodyHasOwnSignature, findSharedMailbox, normalizeProfile, teamProfile } from "./profile.js";
+import { bodyHasOwnSignature, configForOffice, findSharedMailbox, normalizeProfile, teamProfile } from "./profile.js";
 import { fetchMe, getToken, hasSentInConversation, signedInUser } from "./graph.js";
 import { readCachedProfile, isFresh, saveCachedProfile } from "./cache.js";
 
@@ -224,18 +224,20 @@ export function imageSrcFactory(mode) {
 }
 
 /** 当前变体真正需要内嵌（CID 附件）的图片。圆环走 CSS 背景图，不需要内嵌 */
-export function imageKeysFor(variant) {
-  const pos = CFG.markPosition;
+export function imageKeysFor(variant, cfg) {
+  const pos = cfg.markPosition;
   if (variant === "short") return [];
   const used = (k) => (k === "mark" ? pos === "footer" || pos === "name" : k === "markCorner" ? pos === "corner" : true);
-  return Object.keys(IMAGES).filter((k) => CFG.images[k] && used(k));
+  return Object.keys(IMAGES).filter((k) => cfg.images[k] && used(k));
 }
 
 export function buildHtml(variant, profile, mode) {
   const src = imageSrcFactory(mode || CFG.imageMode);
+  // 团队版资料不带 office → 共享邮箱（目前都是澳洲团队）用默认设置
+  const cfg = configForOffice(profile.office, CFG);
   return variant === "short"
-    ? buildShortSignature(profile, CFG, CFG.markInShort ? src : null)
-    : buildFullSignature(profile, CFG, src);
+    ? buildShortSignature(profile, cfg, cfg.markInShort ? src : null)
+    : buildFullSignature(profile, cfg, src);
 }
 
 const EMBEDDED_KEY = "acsSigImages";
@@ -274,7 +276,7 @@ export async function applySignature(variant, profile, opts) {
     const have = opts && opts.reapply ? await embeddedImages() : [];
     const added = [];
     // 只内嵌当前变体真正会用到的图片
-    for (const k of imageKeysFor(variant)) {
+    for (const k of imageKeysFor(variant, configForOffice(profile.office, CFG))) {
       if (have.indexOf(IMAGES[k].cid) !== -1) continue;
       try {
         await addInlineImage(k);

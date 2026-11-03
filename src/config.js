@@ -15,9 +15,9 @@ export const SIGNATURE_CONFIG = {
     addressUrl: "https://maps.google.com/?q=Suite+4.06,+55+Miller+St,+Pyrmont+NSW+2009",
     // 保密声明 & 条款链接 —— 请替换为你们真实的地址
     termsUrl: "https://www.aioncargo.co.nz/au-tc/",
-    termsText: "Confidentiality Statement & Terms and Conditions",
+    termsText: "Terms and Conditions",
     // 免责声明（一行）：disclaimerPrefix + 链接文字(termsText)
-    disclaimerPrefix: "This email is subject to our",
+    disclaimerPrefix: "The content of this email, including any ACS AU quotation, offer, booking, and other services, is subject to ACS AU",
   },
 
   // 签名上方的结束语；设为 "" 则不插入
@@ -50,6 +50,34 @@ export const SIGNATURE_CONFIG = {
     { addresses: ["exportsea@aioncargo.com.au", "au.exportsea@aioncargo.com"], team: "ACS AU Export Sea", phone: "+61 2 9160 2300", ext: "822" },
     { addresses: ["importair@aioncargo.com.au", "au.importair@aioncargo.com"], team: "ACS AU Import Air", phone: "+61 2 9160 2300", ext: "821" },
     { addresses: ["importsea@aioncargo.com.au", "au.importsea@aioncargo.com"], team: "ACS AU Import Sea", phone: "+61 2 9160 2300", ext: "821" },
+  ],
+
+  /**
+   * 其他办公室：Entra "办公室"(officeLocation) 包含 match 里任一文字（不区分大小写）的用户，用这里的设置覆盖上面的默认（澳洲）设置。
+   * 只写和澳洲不同的项；company / labels / images 按字段合并，其余整项替换。Logo、版式、颜色沿用默认。
+   * 匹配不到（或 Entra 没填办公室）的用户一律用默认设置。新增 / 修改办公室：改这里 → 提交即可，不需要重新上传 manifest。
+   */
+  offices: [
+    {
+      match: ["shanghai", "上海"],
+      company: {
+        name: "艾朗国际物流（上海）有限公司",
+        mainPhone: "+86 21 65050600",
+        address: "上海市虹口区衡水路151号前海人寿大厦813室",
+        // 国内打不开 Google 地图，地址不加链接
+        addressUrl: "",
+        termsUrl: "https://www.aioncargo.co.nz/wp-content/uploads/2023/11/ACS-Terms-and-Conditions.pdf",
+        termsText: "Terms and Conditions",
+        disclaimerPrefix: "The content of this email, including any ACS quotation, offer, booking, and other services, is subject to ACS",
+      },
+      // 完整签名在职位下方显示公司中文名
+      showCompanyInFull: true,
+      labels: { web: "Website" },
+      // 暂不放 WCA 徽章
+      images: { badge: null },
+      // Arial 没有中文字形，中文回退到雅黑 / 苹方
+      fontFamily: "Arial, Helvetica, 'Microsoft YaHei', 'PingFang SC', sans-serif",
+    },
   ],
 
   // 分机号来源：先从 Entra "办公电话" 里解析（如 "+61 2 9160 2300 EXT 601" / "x601"），

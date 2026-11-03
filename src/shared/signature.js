@@ -101,7 +101,7 @@ function link(cfg, href, text, color, underline) {
  *  │ (与右侧等高)│ Mobile / Tel / Email / Web / │
  *  │            │ Address                      │
  *  ├────────────┴──────────────────────────────┤  ← 细分隔线（与上方同宽）
- *  │ [WCA]  This email is subject to our Confidentiality Statement & T&C. │
+ *  │ [WCA]  The content of this email ... is subject to ACS AU T&C.     │
  *  └───────────────────────────────────────────┘
  *
  * @param {object} p   标准化后的用户资料（见 profile.js normalizeProfile）
@@ -161,6 +161,10 @@ export function buildFullSignature(p, cfg, imageSrc) {
   if (subtitle.length) {
     html += '<div style="font-family:' + f + ";font-size:" + s.title + "px;line-height:" + (s.title + 4) + "px;color:" + c.muted + ';padding:1px 0 0 0;">' +
       subtitle.join(SEP) + "</div>";
+  }
+  if (cfg.showCompanyInFull && co.name) {
+    html += '<div style="font-family:' + f + ";font-size:" + s.title + "px;line-height:" + (s.title + 4) + "px;color:" + c.text + ';padding:1px 0 0 0;">' +
+      plain(co.name) + "</div>";
   }
   html += '<div style="height:7px;line-height:7px;font-size:1px;">&nbsp;</div>';
   const rowsHtml = '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">' + rows.join("") + "</table>";

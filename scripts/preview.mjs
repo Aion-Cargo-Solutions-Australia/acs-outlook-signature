@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SIGNATURE_CONFIG as CFG } from "../src/config.js";
 import { buildFullSignature, buildShortSignature } from "../src/shared/signature.js";
-import { normalizeProfile, findSharedMailbox, teamProfile } from "../src/shared/profile.js";
+import { normalizeProfile, findSharedMailbox, teamProfile, configForOffice } from "../src/shared/profile.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const me = {
@@ -21,6 +21,11 @@ const member = normalizeProfile({ displayName: "Alex Chen", jobTitle: "Import Co
 const team = teamProfile(member, box, CFG);
 const teamFull = buildFullSignature(team, CFG, dataUri);
 const teamShort = buildShortSignature(team, CFG, dataUri);
+// 上海办公室（Entra 办公室 = Shanghai）
+const sh = normalizeProfile({ displayName: "闾震涛 Leon", jobTitle: "Branch Manager", mail: "Leon.lv@aioncargo.com", officeLocation: "Shanghai", mobilePhone: "+86 18616172470" }, CFG, {});
+const shCfg = configForOffice(sh.office, CFG);
+const shFull = buildFullSignature(sh, shCfg, dataUri);
+const shShort = buildShortSignature(sh, shCfg, dataUri);
 
 const quoted = (inner) =>
   '<div style="border-top:1px solid #e1e1e1;margin-top:18px;padding-top:10px;font:12px Arial;color:#555;"><b>From:</b> John Smith &lt;john@client.com&gt;<br/><b>Sent:</b> Friday, 18 September 2026 3:12 PM<br/><b>Subject:</b> RE: Shipment quote SYD → SIN</div>' + (inner || "");
@@ -38,6 +43,8 @@ h1{font-size:20px;margin:0 0 4px}.sub{color:#666;margin:0 0 20px}.mail{backgroun
 <div class="mail"><span class="tag short">② 同一会话中后续回复 → 精简签名（无图片）</span><p class="body">Hi John,<br/><br/>Confirmed — booking for Monday's vessel.</p>${short}${quoted()}</div>
 <div class="mail"><span class="tag full">④ 用共享邮箱发信（发件人 = ${box.addresses[0]}）→ 团队版完整签名：本人姓名 + 团队名、团队电话和邮箱，不显示个人手机</span><p class="body">Hi John,<br/><br/>Your shipment has arrived and is ready for collection.</p>${teamFull}</div>
 <div class="mail"><span class="tag short">⑤ 共享邮箱：会话里已有团队签名后的回复 → 团队版精简签名</span><p class="body">Hi John,<br/><br/>Ok to pay now, release received.</p>${teamShort}${quoted()}</div>
+<div class="mail"><span class="tag full">⑥ 上海办公室（Entra 办公室 = Shanghai）→ 上海公司信息 + 上海 T&amp;C，版式不变</span><p class="body">Hi John,<br/><br/>Please find the updated quote attached.</p>${shFull}</div>
+<div class="mail"><span class="tag short">⑦ 上海办公室：后续回复 → 精简签名</span><p class="body">Hi John,<br/><br/>Confirmed — booking for Monday's vessel.</p>${shShort}${quoted()}</div>
 </div></body></html>`;
 fs.writeFileSync(path.join(root, "preview.html"), html);
 console.log("✅ preview.html 已生成");
