@@ -55,7 +55,7 @@ h1{font-size:20px;margin:0 0 4px}.sub{color:#666;margin:0 0 20px}.mail{backgroun
 <div class="mail"><span class="tag short">⑦ 上海办公室：后续回复 → 精简签名</span><p class="body">Hi John,<br/><br/>Confirmed — booking for Monday's vessel.</p>${shShort}${quoted()}</div>
 <div class="mail"><span class="tag full">⑧ 个人附加说明（config.js personalNotes，按本人邮箱）→ 红字在结束语和姓名之间</span><p class="body">请查收新SO，更新操作时间。</p>${candyFull}</div>
 <div class="mail"><span class="tag short">⑨ 个人附加说明在精简签名里同样显示</span><p class="body">已收到，谢谢。</p>${phoebeShort}${quoted()}</div>
-<div class="mail"><span class="tag full">⑩ 新西兰办公室（Entra 办公室 = Auckland / New Zealand）→ 奥克兰地址和总机、DDI、ACS T&amp;C（徽章待补）</span><p class="body">Hi John,<br/><br/>Please find the updated quote attached.</p>${nzFull}</div>
+<div class="mail"><span class="tag full">⑩ 新西兰办公室（Entra 办公室 = Auckland / New Zealand）→ 奥克兰地址和总机、DDI、ACS T&amp;C</span><p class="body">Hi John,<br/><br/>Please find the updated quote attached.</p>${nzFull}</div>
 </div></body></html>`;
 fs.writeFileSync(path.join(root, "preview.html"), html);
 console.log("✅ preview.html 已生成");

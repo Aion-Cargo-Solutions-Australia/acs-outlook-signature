@@ -90,8 +90,14 @@ export const SIGNATURE_CONFIG = {
       },
       // 新西兰习惯把直线电话写作 DDI
       labels: { phone: "DDI" },
-      // 现有的 WCA 徽章印着澳洲会员号 152015，新西兰不能用。IATA / CBAFF / 新西兰 WCA 图片到位后，在 images 里登记，再写进 footerBadges
-      images: { badge: null },
+      // 澳洲的 WCA 徽章印着澳洲会员号 152015，新西兰用自己的三个徽章（放在免责声明下面一行）。
+      // shortcut: 图片是从 Ivan 旧签名截图里裁出来的（白底，约 2 倍分辨率），拿到原图后替换同名文件即可
+      images: {
+        iata: { file: "iata-badge.png", width: 55, height: 39, alt: "IATA" },
+        cbaff: { file: "cbaff-badge.png", width: 56, height: 56, alt: "CBAFF New Zealand" },
+        wcaNz: { file: "wca-nz-badge.png", width: 77, height: 57, alt: "WCA Advanced Professionals" },
+      },
+      footerBadges: ["iata", "cbaff", "wcaNz"],
     },
   ],
 
