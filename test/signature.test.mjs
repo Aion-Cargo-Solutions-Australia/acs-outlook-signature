@@ -194,3 +194,16 @@ test("Shanghai signature: Chinese entity, Shanghai address and phone, its own T&
   // 澳洲签名不显示公司名这一行
   assert.ok(!buildFullSignature(normalizeProfile(me, CFG, {}), CFG, src).includes(">Aion Cargo Solutions</div>"));
 });
+
+test("personal notes: shown in red before the name for that person only, in full and short", () => {
+  const candy = normalizeProfile({ displayName: "Candy Wang", mail: "Candy.Wang@aioncargo.com", officeLocation: "Shanghai" }, CFG, {});
+  const cfg = configForOffice(candy.office, CFG);
+  for (const html of [buildFullSignature(candy, cfg, src), buildShortSignature(candy, cfg, src)]) {
+    assert.ok(html.includes("一次性补料，任何更改都会收取改单费RMB500"));
+    assert.ok(html.includes("<b>马士基VGM仅限一次性申报，更新会有罚金USD300</b>"));
+    assert.ok(html.indexOf("改单费") < html.indexOf("Candy Wang"), "notes go above the name");
+    assert.ok(html.includes("color:" + CFG.colors.note));
+  }
+  const others = [normalizeProfile(me, CFG, {}), teamProfile(candy, findSharedMailbox(CFG.sharedMailboxes[0].addresses[0], CFG), CFG)];
+  for (const p of others) assert.ok(!buildFullSignature(p, CFG, src).includes("改单费"));
+});
