@@ -207,3 +207,23 @@ test("personal notes: shown in red before the name for that person only, in full
   const others = [normalizeProfile(me, CFG, {}), teamProfile(candy, findSharedMailbox(CFG.sharedMailboxes[0].addresses[0], CFG), CFG)];
   for (const p of others) assert.ok(!buildFullSignature(p, CFG, src).includes("改单费"));
 });
+
+test("New Zealand office: Auckland address and phone, DDI label, ACS T&C; no Australian details", () => {
+  const ivan = normalizeProfile({ displayName: "Ivan Qiu", jobTitle: "Sales & BD Director", mail: "ivan.qiu@aioncargo.com", officeLocation: "Auckland", mobilePhone: "+64 22 040 7673", businessPhones: ["+64 9 254 4907"] }, CFG, {});
+  const cfg = configForOffice(ivan.office, CFG);
+  assert.equal(configForOffice("New Zealand", CFG).company.mainPhone, "+64 9 254 4900");
+  const full = buildFullSignature(ivan, cfg, src);
+  for (const s of ["Ivan Qiu", "Sales &amp; BD Director", ">DDI<", "+64 9 254 4907", "40 Airpark Drive, Mangere, Auckland 2022", "ACS-Terms-and-Conditions.pdf"]) assert.ok(full.includes(s), "missing " + s);
+  for (const s of ["Pyrmont", "+61", "au-tc", "ACS AU", "cid:badge.png"]) assert.ok(!full.includes(s), "should not contain " + s);
+  assert.equal(normalizeProfile({ displayName: "A B", officeLocation: "Auckland" }, CFG, {}).phone, "+64 9 254 4900");
+});
+
+test("footer badges: one sits left of the disclaimer, several go on their own row below it", () => {
+  const p = normalizeProfile(me, CFG, {});
+  const one = buildFullSignature(p, CFG, src);
+  assert.ok(one.indexOf("cid:badge.png") < one.indexOf("The content of this email"));
+  const cfg = Object.assign({}, CFG, { images: Object.assign({}, CFG.images, { iata: CFG.images.badge }), footerBadges: ["iata", "badge"] });
+  const two = buildFullSignature(p, cfg, src);
+  assert.ok(two.indexOf("The content of this email") < two.indexOf("cid:iata.png"));
+  assert.ok(two.indexOf("cid:iata.png") < two.indexOf("cid:badge.png"));
+});

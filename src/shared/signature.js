@@ -140,7 +140,7 @@ export function buildFullSignature(p, cfg, imageSrc) {
 
   const s = cfg.fontSizes;
   const logo = cfg.images.logo;
-  const badge = cfg.images.badge;
+  const badges = (cfg.footerBadges || ["badge"]).filter((k) => cfg.images[k]);
   const mark = cfg.images.mark;
   const corner = cfg.images.markCorner;
   const disclaimer = disclaimerHtml(cfg);
@@ -199,22 +199,27 @@ export function buildFullSignature(p, cfg, imageSrc) {
 
   // 底部（跨两列，与上方同宽）：细分隔线 + WCA 徽章 + 一行免责声明 +（可选）品牌圆环
   const markInFooter = mark && cfg.markPosition === "footer";
-  if (hasDisclaimer || badge || markInFooter) {
-    html += '<tr><td style="padding:11px 0 0 0;">';
-    html += '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>';
-    html += '<td style="border-top:1px solid ' + c.hairline + ';padding:8px 0 0 0;">';
-    html += '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>';
-    if (badge) {
-      html += '<td width="' + badge.width + '" valign="middle" style="padding:0 12px 0 0;vertical-align:middle;">' + imgTag(badge, imageSrc("badge")) + "</td>";
-    }
+  if (hasDisclaimer || badges.length || markInFooter) {
+    const badgeCell = (k, pad) => '<td width="' + cfg.images[k].width + '" valign="middle" style="padding:' + pad + ';vertical-align:middle;">' + imgTag(cfg.images[k], imageSrc(k)) + "</td>";
+    // 多个徽章并排放在免责声明左边会让底部比上面宽很多，所以另起一行
+    const stacked = badges.length > 1;
+    let cells = stacked ? "" : badges.map((k) => badgeCell(k, "0 12px 0 0")).join("");
     if (hasDisclaimer) {
-      html += '<td valign="middle" style="font-family:' + f + ";font-size:" + s.footer + "px;line-height:" + (s.footer + 4) + "px;color:" + c.footer +
+      cells += '<td valign="middle" style="font-family:' + f + ";font-size:" + s.footer + "px;line-height:" + (s.footer + 4) + "px;color:" + c.footer +
         ';vertical-align:middle;">' + disclaimer + "</td>";
     }
     if (markInFooter) {
-      html += '<td width="' + mark.width + '" align="right" valign="middle" style="padding:0 0 0 16px;text-align:right;vertical-align:middle;">' + imgTag(mark, imageSrc("mark")) + "</td>";
+      cells += '<td width="' + mark.width + '" align="right" valign="middle" style="padding:0 0 0 16px;text-align:right;vertical-align:middle;">' + imgTag(mark, imageSrc("mark")) + "</td>";
     }
-    html += "</tr></table></td></tr></table></td></tr>";
+    html += '<tr><td style="padding:11px 0 0 0;">';
+    html += '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>';
+    html += '<td style="border-top:1px solid ' + c.hairline + ';padding:8px 0 0 0;">';
+    if (cells) html += '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>' + cells + "</tr></table>";
+    if (stacked) {
+      html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>' +
+        badges.map((k) => badgeCell(k, (cells ? "8px" : "0") + " 16px 0 0")).join("") + "</tr></table>";
+    }
+    html += "</td></tr></table></td></tr>";
   }
   html += "</table></div>";
   return html;

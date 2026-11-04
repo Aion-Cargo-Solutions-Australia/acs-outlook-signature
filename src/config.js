@@ -78,6 +78,21 @@ export const SIGNATURE_CONFIG = {
       // Arial 没有中文字形，中文回退到雅黑 / 苹方
       fontFamily: "Arial, Helvetica, 'Microsoft YaHei', 'PingFang SC', sans-serif",
     },
+    {
+      match: ["new zealand", "auckland"],
+      company: {
+        mainPhone: "+64 9 254 4900",
+        address: "40 Airpark Drive, Mangere, Auckland 2022",
+        addressUrl: "https://maps.google.com/?q=40+Airpark+Drive,+Mangere,+Auckland+2022",
+        termsUrl: "https://www.aioncargo.co.nz/wp-content/uploads/2023/11/ACS-Terms-and-Conditions.pdf",
+        termsText: "Terms and Conditions",
+        disclaimerPrefix: "The content of this email, including any ACS quotation, offer, booking, and other services, is subject to ACS",
+      },
+      // 新西兰习惯把直线电话写作 DDI
+      labels: { phone: "DDI" },
+      // 现有的 WCA 徽章印着澳洲会员号 152015，新西兰不能用。IATA / CBAFF / 新西兰 WCA 图片到位后，在 images 里登记，再写进 footerBadges
+      images: { badge: null },
+    },
   ],
 
   /**
@@ -120,6 +135,8 @@ export const SIGNATURE_CONFIG = {
     markCorner: { file: "acs-mark-corner.png", width: 48, height: 45, alt: "" },
     // 不需要底部徽章 / 圆环就设为 null
   },
+  // 完整签名底部显示的徽章（images 里的名字，按顺序）。只有一个时放在免责声明左边；多个时另起一行放在免责声明下面
+  footerBadges: ["badge"],
 
   /**
    * 品牌圆环标志的位置（完整签名）：

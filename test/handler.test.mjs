@@ -174,3 +174,10 @@ test("Shanghai office (Entra officeLocation) → Shanghai company details in the
   assert.ok(!calls.signature.includes("Pyrmont"));
   assert.deepEqual(calls.attachments, ["acs-logo.png"]); // 不内嵌 WCA 徽章
 });
+
+test("New Zealand office (Entra officeLocation Auckland) → NZ details, only the badges it lists are embedded", async () => {
+  const me = { displayName: "Ivan Qiu", jobTitle: "Sales & BD Director", mail: "ivan.qiu@aioncargo.com", userPrincipalName: "ivan.qiu@aioncargo.com", officeLocation: "Auckland", mobilePhone: "+64 22 040 7673", businessPhones: ["+64 9 254 4907"] };
+  const { calls } = await run({ composeType: "newMail", from: "ivan.qiu@aioncargo.com", me });
+  for (const s of ["Ivan Qiu", ">DDI<", "+64 9 254 4907", "Airpark Drive"]) assert.ok(calls.signature.includes(s), "missing " + s);
+  assert.deepEqual(calls.attachments, ["acs-logo.png"]); // 澳洲 WCA 徽章（会员号 152015）不给新西兰用
+});
