@@ -33,7 +33,9 @@ fs.writeFileSync(
   "// 自动生成，勿改\nexport const ADDIN = " + JSON.stringify({ baseUrl, clientId, tenantId, version: cfg.version, build: buildId }, null, 2) + ";\n"
 );
 const images = {};
-for (const [key, img] of Object.entries(SIGNATURE_CONFIG.images)) {
+// 默认图片 + 各办公室自己的图片（如新西兰的 IATA 徽章）都要打包
+const allImages = [SIGNATURE_CONFIG.images].concat((SIGNATURE_CONFIG.offices || []).map((o) => o.images || {}));
+for (const [key, img] of allImages.flatMap((m) => Object.entries(m))) {
   if (!img) continue;
   const file = path.join(root, "src", "assets", img.file);
   const b64 = fs.readFileSync(file).toString("base64");

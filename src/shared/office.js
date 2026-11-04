@@ -230,7 +230,8 @@ export function imageSrcFactory(mode) {
 export function imageKeysFor(variant, cfg) {
   const pos = cfg.markPosition;
   if (variant === "short") return [];
-  const used = (k) => (k === "mark" ? pos === "footer" || pos === "name" : k === "markCorner" ? pos === "corner" : true);
+  const badges = cfg.footerBadges || ["badge"];
+  const used = (k) => (k === "mark" ? pos === "footer" || pos === "name" : k === "markCorner" ? pos === "corner" : k === "logo" || badges.indexOf(k) !== -1);
   return Object.keys(IMAGES).filter((k) => cfg.images[k] && used(k));
 }
 
