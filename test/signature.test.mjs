@@ -213,7 +213,8 @@ test("New Zealand office: Auckland address and phone, DDI label, ACS T&C; no Aus
   const cfg = configForOffice(ivan.office, CFG);
   assert.equal(configForOffice("New Zealand", CFG).company.mainPhone, "+64 9 254 4900");
   const full = buildFullSignature(ivan, cfg, src);
-  for (const s of ["Ivan Qiu", "Sales &amp; BD Director", ">DDI<", "+64 9 254 4907", "40 Airpark Drive, Mangere, Auckland 2022", "ACS-Terms-and-Conditions.pdf"]) assert.ok(full.includes(s), "missing " + s);
+  for (const s of ["Ivan Qiu", "Sales &amp; BD Director", ">DDI<", "+64 9 254 4907", "40 Airpark Drive, Mangere, Auckland 2022", "ACS-Terms-and-Conditions.pdf", "cid:iata.png", "cid:cbaff.png", "cid:wcaNz.png"]) assert.ok(full.includes(s), "missing " + s);
+  assert.ok(full.indexOf("The content of this email") < full.indexOf("cid:iata.png"), "badges go below the disclaimer");
   for (const s of ["Pyrmont", "+61", "au-tc", "ACS AU", "cid:badge.png"]) assert.ok(!full.includes(s), "should not contain " + s);
   assert.equal(normalizeProfile({ displayName: "A B", officeLocation: "Auckland" }, CFG, {}).phone, "+64 9 254 4900");
 });
