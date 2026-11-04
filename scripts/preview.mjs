@@ -26,6 +26,11 @@ const sh = normalizeProfile({ displayName: "闾震涛 Leon", jobTitle: "Branch M
 const shCfg = configForOffice(sh.office, CFG);
 const shFull = buildFullSignature(sh, shCfg, dataUri);
 const shShort = buildShortSignature(sh, shCfg, dataUri);
+// 个人附加说明（config.personalNotes）
+const candy = normalizeProfile({ displayName: "Candy Wang", jobTitle: "Operations Manager", mail: "Candy.Wang@aioncargo.com", officeLocation: "Shanghai", mobilePhone: "+86 13122933013" }, CFG, {});
+const candyFull = buildFullSignature(candy, shCfg, dataUri);
+const phoebe = normalizeProfile({ displayName: "Phoebe Wang", jobTitle: "Accountant", mail: "phoebe.wang@aioncargo.com", officeLocation: "Shanghai", mobilePhone: "+86 18016305361" }, CFG, {});
+const phoebeShort = buildShortSignature(phoebe, shCfg, dataUri);
 
 const quoted = (inner) =>
   '<div style="border-top:1px solid #e1e1e1;margin-top:18px;padding-top:10px;font:12px Arial;color:#555;"><b>From:</b> John Smith &lt;john@client.com&gt;<br/><b>Sent:</b> Friday, 18 September 2026 3:12 PM<br/><b>Subject:</b> RE: Shipment quote SYD → SIN</div>' + (inner || "");
@@ -45,6 +50,8 @@ h1{font-size:20px;margin:0 0 4px}.sub{color:#666;margin:0 0 20px}.mail{backgroun
 <div class="mail"><span class="tag short">⑤ 共享邮箱：会话里已有团队签名后的回复 → 团队版精简签名</span><p class="body">Hi John,<br/><br/>Ok to pay now, release received.</p>${teamShort}${quoted()}</div>
 <div class="mail"><span class="tag full">⑥ 上海办公室（Entra 办公室 = Shanghai）→ 上海公司信息 + 上海 T&amp;C，版式不变</span><p class="body">Hi John,<br/><br/>Please find the updated quote attached.</p>${shFull}</div>
 <div class="mail"><span class="tag short">⑦ 上海办公室：后续回复 → 精简签名</span><p class="body">Hi John,<br/><br/>Confirmed — booking for Monday's vessel.</p>${shShort}${quoted()}</div>
+<div class="mail"><span class="tag full">⑧ 个人附加说明（config.js personalNotes，按本人邮箱）→ 红字在结束语和姓名之间</span><p class="body">请查收新SO，更新操作时间。</p>${candyFull}</div>
+<div class="mail"><span class="tag short">⑨ 个人附加说明在精简签名里同样显示</span><p class="body">已收到，谢谢。</p>${phoebeShort}${quoted()}</div>
 </div></body></html>`;
 fs.writeFileSync(path.join(root, "preview.html"), html);
 console.log("✅ preview.html 已生成");

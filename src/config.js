@@ -80,6 +80,21 @@ export const SIGNATURE_CONFIG = {
     },
   ],
 
+  /**
+   * 个人附加说明：按本人邮箱（不区分大小写），以红字显示在结束语和姓名之间，完整签名和精简签名都有。
+   * 每项一行；写成 { text: "...", bold: true } 则加粗。用共享邮箱发信时不显示（那是团队签名）。
+   * 新增 / 修改：改这里 → 提交即可，不需要重新上传 manifest。
+   */
+  personalNotes: {
+    "candy.wang@aioncargo.com": [
+      "所有提单信息都请提供一次性补料，任何更改都会收取改单费RMB500",
+      { text: "马士基VGM仅限一次性申报，更新会有罚金USD300", bold: true },
+    ],
+    "phoebe.wang@aioncargo.com": [
+      "需要开票请提供开票抬头，项目名称默认开国际货物运输代理服务费，如对发票有要求请在开发票前提出；付款后麻烦提供水单，我司将在复核后销账，谢谢配合~",
+    ],
+  },
+
   // 分机号来源：先从 Entra "办公电话" 里解析（如 "+61 2 9160 2300 EXT 601" / "x601"），
   // 解析不到再读这个扩展属性（Exchange 自定义属性 1 = extensionAttribute1）
   extensionAttribute: "extensionAttribute1",
@@ -147,6 +162,7 @@ export const SIGNATURE_CONFIG = {
     divider: "#D70F44", // Logo 与信息之间的竖线
     hairline: "#e2e2e2", // 底部分隔细线
     accent: "#D70F44", // ACS Logo 红色
+    note: "#D70F44", // 个人附加说明（personalNotes）
   },
   fontFamily: "Arial, Helvetica, sans-serif",
 };

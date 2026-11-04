@@ -25,6 +25,17 @@ function signOffHtml(cfg) {
   );
 }
 
+/** 个人附加说明（config.personalNotes，按本人邮箱）：红字，放在结束语和签名主体之间。表格外单独一块，长句按正文宽度换行，不会撑宽签名 */
+function notesHtml(p, cfg) {
+  const lines = ((cfg.personalNotes || {})[String(p.email || "").toLowerCase()]) || [];
+  if (!lines.length) return "";
+  return (
+    '<p style="margin:0 0 10px 0;font-family:' + cfg.fontFamily + ";font-size:13px;line-height:19px;color:" + (cfg.colors.note || cfg.colors.accent) + ';">' +
+    lines.map((l) => (typeof l === "string" ? escapeHtml(l) : l.bold ? "<b>" + escapeHtml(l.text) + "</b>" : escapeHtml(l.text))).join("<br/>") +
+    "</p>"
+  );
+}
+
 function imgTag(img, src) {
   return (
     '<img src="' + escapeHtml(src) + '" width="' + img.width + '" height="' + img.height + '" alt="' + escapeHtml(img.alt) +
@@ -137,6 +148,7 @@ export function buildFullSignature(p, cfg, imageSrc) {
 
   let html = '<div id="' + containerId(p) + '" data-acs-sig="full">';
   html += signOffHtml(cfg);
+  html += notesHtml(p, cfg);
   // Logo + 联系方式放在独立的内层表格：用 colspan 和下方的免责声明共用列时，Word 引擎（经典 Outlook）会把多余宽度分给 Logo 列
   html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">';
   html += '<tr><td style="padding:0;"><table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>';
@@ -242,6 +254,7 @@ export function buildShortSignature(p, cfg, imageSrc) {
 
   let html = '<div id="' + containerId(p) + '" data-acs-sig="short">';
   if (cfg.signOffInShort) html += signOffHtml(cfg);
+  html += notesHtml(p, cfg);
   html += '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr>';
   html += '<td style="border-left:3px solid ' + c.accent + ';padding:1px 0 1px 10px;font-family:' + f + ";font-size:12px;line-height:19px;color:" + c.muted + ';">';
   // 圆环用 CSS 背景图（不占位，手机上也不会把排版挤乱）
