@@ -36,6 +36,18 @@ function notesHtml(p, cfg) {
   );
 }
 
+/** 节日横幅（config images.banner）：until 之前显示 */
+export function activeBanner(cfg) {
+  const b = cfg.images.banner;
+  return b && !(b.until && Date.now() >= Date.parse(b.until)) ? b : null;
+}
+
+function bannerHtml(cfg, imageSrc) {
+  const b = imageSrc && activeBanner(cfg);
+  return b ? '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr><td style="padding:12px 0 0 0;">' +
+    imgTag(b, imageSrc("banner")) + "</td></tr></table>" : "";
+}
+
 function imgTag(img, src) {
   return (
     '<img src="' + escapeHtml(src) + '" width="' + img.width + '" height="' + img.height + '" alt="' + escapeHtml(img.alt) +
@@ -221,7 +233,7 @@ export function buildFullSignature(p, cfg, imageSrc) {
     }
     html += "</td></tr></table></td></tr>";
   }
-  html += "</table></div>";
+  html += "</table>" + bannerHtml(cfg, imageSrc) + "</div>";
   return html;
 }
 
@@ -270,6 +282,6 @@ export function buildShortSignature(p, cfg, imageSrc) {
     html += '<div style="padding:6px 0 0 0;font-size:10px;line-height:14px;color:' + c.footer + ';">' + disclaimer + "</div>";
   }
   if (showMark) html += "</div>";
-  html += "</td></tr></table></div>";
+  html += "</td></tr></table>" + bannerHtml(cfg, imageSrc) + "</div>";
   return html;
 }

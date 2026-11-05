@@ -286,6 +286,7 @@ Update-MgUser -UserId ivy.hu@aioncargo.com `
 | 员工换手机、升职 | 在 Entra 修改；最迟 12 小时后签名自动更新，或让员工在面板点“刷新资料” | 否 |
 | 新员工入职 | 补全 Entra 资料即可（加载项已分配给整个组织或组） | 否 |
 | 改公司地址、网址、免责声明、结束语 | 修改 `src/config.js` → 提交 | 否 |
+| 节日横幅（如圣诞放假通知） | 图片放进 `src/assets/`，在 `src/config.js` 的 `images.banner` 里填文件名、尺寸和 `until`（到这个时间自动不再显示）→ 提交。只有澳洲显示：其他办公室在各自 `images` 里设 `banner: null` | 否 |
 | 新增共享邮箱，改团队名、电话、分机 | 修改 `src/config.js` 的 `sharedMailboxes` → 提交 | 否 |
 | 换 Logo 或徽章 | 替换 `src/assets/` 里的文件 → 提交 | 否 |
 | 改签名样式 | 修改 `src/shared/signature.js` → 提交 | 否 |

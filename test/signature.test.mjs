@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { SIGNATURE_CONFIG as CFG } from "../src/config.js";
-import { buildFullSignature, buildShortSignature, escapeHtml } from "../src/shared/signature.js";
+import { activeBanner, buildFullSignature, buildShortSignature, escapeHtml } from "../src/shared/signature.js";
 import { normalizeProfile, splitExtension, bodyHasOwnSignature, findSharedMailbox, teamProfile, configForOffice } from "../src/shared/profile.js";
 
 const me = {
@@ -79,9 +79,9 @@ test("full signature omits empty rows", () => {
   assert.ok(html.includes(">Tel<") && html.includes("+61 2 9160 2300")); // falls back to main phone
 });
 
-test("short signature: no <img>, faded mark only as CSS background", () => {
+test("short signature: no <img> except the seasonal banner, faded mark only as CSS background", () => {
   const html = buildShortSignature(normalizeProfile(me, CFG, {}), CFG, src);
-  assert.ok(!/<img/i.test(html));
+  assert.equal((html.match(/<img/gi) || []).length, activeBanner(CFG) ? 1 : 0);
   assert.ok(html.includes("background-image:url(") && html.includes("background-repeat:no-repeat"));
   assert.ok(!/background-image/i.test(buildShortSignature(normalizeProfile(me, CFG, {}), CFG))); // 不传 imageSrc → 纯文字
   for (const s of ["Ivy Hu", "Managing Director - Australia", "Mobile</b>&nbsp;+61 425 666 802", "Ext.</span>&nbsp;601", "Aion Cargo Solutions", "Suite 4.06, 55 Miller St, Pyrmont NSW 2009"]) assert.ok(html.includes(s), "missing " + s);
@@ -227,4 +227,19 @@ test("footer badges: one sits left of the disclaimer, several go on their own ro
   const two = buildFullSignature(p, cfg, src);
   assert.ok(two.indexOf("The content of this email") < two.indexOf("cid:iata.png"));
   assert.ok(two.indexOf("cid:iata.png") < two.indexOf("cid:badge.png"));
+});
+
+test("Christmas banner: AU personal and team signatures (full + short) until it expires, never other offices", () => {
+  const withUntil = (until) => ({ ...CFG, images: { ...CFG.images, banner: { ...CFG.images.banner, until } } });
+  const live = withUntil("2999-01-01T00:00:00Z");
+  const p = normalizeProfile(me, live, {});
+  const team = teamProfile(p, findSharedMailbox("accounts@aioncargo.com.au", live), live);
+  for (const html of [buildFullSignature(p, live, src), buildShortSignature(p, live, src), buildFullSignature(team, live, src), buildShortSignature(team, live, src)]) {
+    assert.ok(html.includes('src="cid:banner.png" width="480" height="88"'));
+  }
+  const gone = withUntil("2000-01-01T00:00:00Z");
+  assert.ok(!buildFullSignature(p, gone, src).includes("banner") && !buildShortSignature(p, gone, src).includes("banner"));
+  for (const office of ["Auckland", "Shanghai"]) assert.equal(activeBanner(configForOffice(office, live)), null, office);
+  // 1 月 1 日（悉尼时间）当天还显示，1 月 2 日 0 点起不再显示
+  assert.equal(new Date(CFG.images.banner.until).toISOString(), "2027-01-01T13:00:00.000Z");
 });

@@ -74,7 +74,7 @@ export const SIGNATURE_CONFIG = {
       showCompanyInFull: true,
       labels: { web: "Website" },
       // 暂不放 WCA 徽章
-      images: { badge: null },
+      images: { badge: null, banner: null },
       // Arial 没有中文字形，中文回退到雅黑 / 苹方
       fontFamily: "Arial, Helvetica, 'Microsoft YaHei', 'PingFang SC', sans-serif",
     },
@@ -93,6 +93,7 @@ export const SIGNATURE_CONFIG = {
       // 澳洲的 WCA 徽章印着澳洲会员号 152015，新西兰用自己的三个徽章（放在免责声明下面一行）。
       // shortcut: 图片是从 Ivan 旧签名截图里裁出来的（白底，约 2 倍分辨率），拿到原图后替换同名文件即可
       images: {
+        banner: null,
         iata: { file: "iata-badge.png", width: 55, height: 39, alt: "IATA" },
         cbaff: { file: "cbaff-badge.png", width: 56, height: 56, alt: "CBAFF New Zealand" },
         wcaNz: { file: "wca-nz-badge.png", width: 77, height: 57, alt: "WCA Advanced Professionals" },
@@ -144,7 +145,13 @@ export const SIGNATURE_CONFIG = {
     mark: { file: "acs-mark.png", width: 40, height: 38, alt: "" },
     // 淡化的 1/4 圆环（带箭头那一段），放在联系方式右下角做背景装饰
     markCorner: { file: "acs-mark-corner.png", width: 48, height: 45, alt: "" },
-    // 不需要底部徽章 / 圆环就设为 null
+    // 节日横幅：完整签名和精简签名最下面都显示，until 之后自动不再显示（按写邮件那台电脑 / 手机的时间）。
+    // 只给澳洲：其他办公室在各自的 images 里设成 null。过期后可以删掉这一项和图片文件。
+    banner: {
+      file: "christmas-2026.png", width: 480, height: 88, until: "2027-01-02T00:00:00+11:00",
+      alt: "Merry Christmas & Happy New Year. Office closed: 25, 26 & 28 Dec 2026 and 1 Jan 2027. Thank you for your support, from all of us at ACS AU.",
+    },
+    // 不需要底部徽章 / 圆环 / 横幅就设为 null
   },
   // 完整签名底部显示的徽章（images 里的名字，按顺序）。只有一个时放在免责声明左边；多个时另起一行放在免责声明下面
   footerBadges: ["badge"],
