@@ -3,6 +3,11 @@ import assert from "node:assert/strict";
 import { build } from "esbuild";
 import vm from "node:vm";
 import path from "node:path";
+import { SIGNATURE_CONFIG as CFG } from "../src/config.js";
+import { activeBanner } from "../src/shared/signature.js";
+
+// 节日横幅在 until 之前每封澳洲签名都会内嵌；测试不依赖今天是哪天
+const BANNER = activeBanner(CFG) ? [CFG.images.banner.file] : [];
 
 const root = path.resolve(import.meta.dirname, "..");
 const bundle = (await build({
@@ -70,7 +75,7 @@ test("new message → full signature with embedded images", async () => {
   const { calls } = await run({ composeType: "newMail" });
   assert.ok(calls.disabled);
   assert.match(calls.signature, /data-acs-sig="full"/);
-  assert.deepEqual(calls.attachments, ["acs-logo.png", "wca-badge.png"]);
+  assert.deepEqual(calls.attachments, ["acs-logo.png", "wca-badge.png"].concat(BANNER));
   assert.match(calls.signature, /cid:acs-logo\.png/);
 });
 
@@ -83,7 +88,7 @@ test("first reply (never sent in conversation) → full", async () => {
 test("later reply (already sent) → short, only the faded mark is embedded", async () => {
   const { calls } = await run({ composeType: "reply", sent: true });
   assert.match(calls.signature, /data-acs-sig="short"/);
-  assert.equal(calls.attachments.length, 0); // 圆环是 CSS 背景图，不占附件
+  assert.deepEqual(calls.attachments, BANNER); // 圆环是 CSS 背景图，不占附件
 });
 
 test("forward → full (forwardAlwaysFull)", async () => {
@@ -110,7 +115,7 @@ test("switching From to a shared mailbox replaces the signature without re-embed
   c.setFrom("accounts@aioncargo.com.au");
   await c.fire("onMessageFromChangedHandler");
   assert.ok(c.calls.signature.includes("ACS AU Accounts") && !c.calls.signature.includes("+61 425 666 802"));
-  assert.deepEqual(c.calls.attachments, ["acs-logo.png", "wca-badge.png"]);
+  assert.deepEqual(c.calls.attachments, ["acs-logo.png", "wca-badge.png"].concat(BANNER));
   c.setFrom("ivy.hu@aioncargo.com");
   await c.fire("onMessageFromChangedHandler");
   assert.ok(c.calls.signature.includes("+61 425 666 802") && !c.calls.signature.includes("ACS AU Accounts"));
@@ -130,7 +135,7 @@ test("re-selecting the same From on a first reply keeps the full signature", asy
   assert.match(c.calls.signature, /data-acs-sig="full"/);
   await c.fire("onMessageFromChangedHandler");
   assert.match(c.calls.signature, /data-acs-sig="full"/);
-  assert.equal(c.calls.attachments.length, 2);
+  assert.equal(c.calls.attachments.length, 2 + BANNER.length);
 });
 
 test("shared mailbox opened on its own and no sign-in → team name instead of a person", async () => {
