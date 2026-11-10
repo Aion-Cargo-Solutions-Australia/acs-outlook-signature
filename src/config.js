@@ -114,7 +114,8 @@ export const SIGNATURE_CONFIG = {
     ],
     "caroline@aioncargo.com": [
       "所有提单信息都请提供一次性补料，任何更改都会收取改单费RMB500",
-      "马士基VGM仅限一次性申报，更新会有罚金USD300",
+      "请客户和车队自行检查并控制好提柜时间，以免产生超期用箱费，马士基只有七天免箱期哦",
+      { text: "马士基VGM仅限一次性申报，更新会有罚金USD300", bold: true },
       { text: "为了贵司货物顺利出运，请务必核对放舱信息(包括 卸货港 目的港 箱型 船期 码头等)如有问题 请及时联系更改 如无异议视作默认放舱内容 感谢您的配合!", bold: true },
     ],
     "phoebe.wang@aioncargo.com": [
