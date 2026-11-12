@@ -94,11 +94,18 @@ export const SIGNATURE_CONFIG = {
       // shortcut: 图片是从 Ivan 旧签名截图里裁出来的（白底，约 2 倍分辨率），拿到原图后替换同名文件即可
       images: {
         banner: null,
+        // 新西兰圣诞营业时间；4 Jan 2027 之后自动不显示（源图 980×327 转成 JPEG，嵌入邮件约 100KB）
+        // 图片名全局唯一：叫 christmasNz，再用下面的 bannerImage 指过去，不能也叫 banner（会覆盖澳洲的图）
+        christmasNz: {
+          file: "christmas-2026-nz.jpg", width: 600, height: 200, until: "2027-01-05T00:00:00+13:00",
+          alt: "ACS End Of Year Schedule 2026: 27 Nov limited operation until 4 PM (Christmas party); 24 Dec half day; 25-28 Dec closed; 29-30 Dec normal; 31 Dec half day; 1-4 Jan 2027 closed.",
+        },
         iata: { file: "iata-badge.png", width: 55, height: 39, alt: "IATA" },
         cbaff: { file: "cbaff-badge.png", width: 56, height: 56, alt: "CBAFF New Zealand" },
         wcaNz: { file: "wca-nz-badge.png", width: 77, height: 57, alt: "WCA Advanced Professionals" },
       },
       footerBadges: ["iata", "cbaff", "wcaNz"],
+      bannerImage: "christmasNz",
     },
   ],
 
