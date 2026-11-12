@@ -5,6 +5,7 @@ import vm from "node:vm";
 import path from "node:path";
 import { SIGNATURE_CONFIG as CFG } from "../src/config.js";
 import { activeBanner } from "../src/shared/signature.js";
+import { configForOffice } from "../src/shared/profile.js";
 
 // 节日横幅在 until 之前每封澳洲签名都会内嵌；测试不依赖今天是哪天
 const BANNER = activeBanner(CFG) ? [CFG.images.banner.file] : [];
@@ -185,7 +186,9 @@ test("New Zealand office (Entra officeLocation Auckland) → NZ details, only th
   const me = { displayName: "Ivan Qiu", jobTitle: "Sales & BD Director", mail: "ivan.qiu@aioncargo.com", userPrincipalName: "ivan.qiu@aioncargo.com", officeLocation: "Auckland", mobilePhone: "+64 22 040 7673", businessPhones: ["+64 9 254 4907"] };
   const { calls } = await run({ composeType: "newMail", from: "ivan.qiu@aioncargo.com", me });
   for (const s of ["Ivan Qiu", ">DDI<", "+64 9 254 4907", "Airpark Drive"]) assert.ok(calls.signature.includes(s), "missing " + s);
-  assert.deepEqual(calls.attachments, ["acs-logo.png", "iata-badge.png", "cbaff-badge.png", "wca-nz-badge.png"]); // 不带澳洲 WCA 徽章（会员号 152015）
+  // 不带澳洲 WCA 徽章（会员号 152015），也不带澳洲的圣诞横幅；NZ 自己的横幅在 until 之前才有
+  const nzBanner = activeBanner(configForOffice("Auckland", CFG)) ? ["christmas-2026-nz.jpg"] : [];
+  assert.deepEqual(calls.attachments, ["acs-logo.png"].concat(nzBanner, ["iata-badge.png", "cbaff-badge.png", "wca-nz-badge.png"]));
 });
 
 test("every inserted signature is flagged in a message header for the Exchange fallback rule", async () => {

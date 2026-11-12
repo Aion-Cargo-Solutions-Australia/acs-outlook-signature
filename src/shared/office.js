@@ -2,7 +2,7 @@
 import { SIGNATURE_CONFIG as CFG } from "../config.js";
 import { IMAGES } from "../generated/images.js";
 import { ADDIN } from "../generated/addin.js";
-import { activeBanner, buildFullSignature, buildShortSignature } from "./signature.js";
+import { activeBanner, bannerKey, buildFullSignature, buildShortSignature } from "./signature.js";
 import { bodyHasOwnSignature, configForOffice, findSharedMailbox, normalizeProfile, teamProfile } from "./profile.js";
 import { fetchMe, getToken, hasSentInConversation, signedInUser } from "./graph.js";
 import { readCachedProfile, isFresh, saveCachedProfile } from "./cache.js";
@@ -231,9 +231,9 @@ export function imageSrcFactory(mode) {
 export function imageKeysFor(variant, cfg) {
   const pos = cfg.markPosition;
   const banner = !!activeBanner(cfg);
-  if (variant === "short") return banner ? ["banner"] : [];
+  if (variant === "short") return banner ? [bannerKey(cfg)] : [];
   const badges = cfg.footerBadges || ["badge"];
-  const used = (k) => (k === "banner" ? banner : k === "mark" ? pos === "footer" || pos === "name" : k === "markCorner" ? pos === "corner" : k === "logo" || badges.indexOf(k) !== -1);
+  const used = (k) => (k === bannerKey(cfg) ? banner : k === "banner" ? false : k === "mark" ? pos === "footer" || pos === "name" : k === "markCorner" ? pos === "corner" : k === "logo" || badges.indexOf(k) !== -1);
   return Object.keys(IMAGES).filter((k) => cfg.images[k] && used(k));
 }
 

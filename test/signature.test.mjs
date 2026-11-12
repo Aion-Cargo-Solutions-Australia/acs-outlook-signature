@@ -229,7 +229,7 @@ test("footer badges: one sits left of the disclaimer, several go on their own ro
   assert.ok(two.indexOf("cid:iata.png") < two.indexOf("cid:badge.png"));
 });
 
-test("Christmas banner: AU personal and team signatures (full + short) until it expires, never other offices", () => {
+test("Christmas banner: AU personal and team signatures (full + short) until it expires, not Shanghai", () => {
   const withUntil = (until) => ({ ...CFG, images: { ...CFG.images, banner: { ...CFG.images.banner, until } } });
   const live = withUntil("2999-01-01T00:00:00Z");
   const p = normalizeProfile(me, live, {});
@@ -239,7 +239,19 @@ test("Christmas banner: AU personal and team signatures (full + short) until it 
   }
   const gone = withUntil("2000-01-01T00:00:00Z");
   assert.ok(!buildFullSignature(p, gone, src).includes("banner") && !buildShortSignature(p, gone, src).includes("banner"));
-  for (const office of ["Auckland", "Shanghai"]) assert.equal(activeBanner(configForOffice(office, live)), null, office);
+  assert.equal(activeBanner(configForOffice("Shanghai", live)), null);
   // 1 月 1 日（悉尼时间）当天还显示，1 月 2 日 0 点起不再显示
   assert.equal(new Date(CFG.images.banner.until).toISOString(), "2027-01-01T13:00:00.000Z");
+});
+
+test("NZ Christmas banner: own image under its own key, never replaces the AU banner", () => {
+  const nz = configForOffice("Auckland", CFG);
+  const p = normalizeProfile({ ...me, officeLocation: "Auckland" }, CFG, {});
+  const live = { ...nz, images: { ...nz.images, christmasNz: { ...nz.images.christmasNz, until: "2999-01-01T00:00:00Z" } } };
+  for (const html of [buildFullSignature(p, live, src), buildShortSignature(p, live, src)]) {
+    assert.ok(html.includes('src="cid:christmasNz.png" width="600" height="200"'));
+    assert.ok(!html.includes("cid:banner.png"));
+  }
+  assert.equal(activeBanner(configForOffice("Sydney", CFG)).file, "christmas-2026.png");
+  assert.equal(new Date(nz.images.christmasNz.until).toISOString(), "2027-01-04T11:00:00.000Z");
 });

@@ -36,16 +36,21 @@ function notesHtml(p, cfg) {
   );
 }
 
-/** 节日横幅（config images.banner）：until 之前显示 */
+/** 节日横幅用哪张图：默认 images.banner；办公室可用 bannerImage 指定自己的图（图片名全局唯一，不能和澳洲的 banner 重名） */
+export function bannerKey(cfg) {
+  return cfg.bannerImage || "banner";
+}
+
+/** 节日横幅：until 之前显示 */
 export function activeBanner(cfg) {
-  const b = cfg.images.banner;
+  const b = cfg.images[bannerKey(cfg)];
   return b && !(b.until && Date.now() >= Date.parse(b.until)) ? b : null;
 }
 
 function bannerHtml(cfg, imageSrc) {
   const b = imageSrc && activeBanner(cfg);
   return b ? '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;"><tr><td style="padding:12px 0 0 0;">' +
-    imgTag(b, imageSrc("banner")) + "</td></tr></table>" : "";
+    imgTag(b, imageSrc(bannerKey(cfg))) + "</td></tr></table>" : "";
 }
 
 function imgTag(img, src) {
