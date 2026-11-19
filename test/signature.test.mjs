@@ -171,6 +171,9 @@ const LEON = {
 test("configForOffice: Entra office picks the office settings, anything else keeps the defaults", () => {
   for (const office of ["Shanghai", "SHANGHAI 813", "上海"]) assert.equal(configForOffice(office, CFG).company.mainPhone, "+86 21 65050600", office);
   for (const office of ["Sydney", "", null, undefined]) assert.equal(configForOffice(office, CFG), CFG);
+  // Entra 里实际填的值（2026-11）：新西兰是街道地址，澳洲是完整地址
+  assert.equal(configForOffice("40 Airpark Drive", CFG).company.mainPhone, "+64 9 254 4900");
+  assert.equal(configForOffice("Suite 4.06, 55 Miller St, Pyrmont NSW 2009", CFG), CFG);
   // 只覆盖写了的字段：标签、网址、Logo 沿用默认
   const sh = configForOffice("Shanghai", CFG);
   assert.equal(sh.labels.mobile, CFG.labels.mobile);
