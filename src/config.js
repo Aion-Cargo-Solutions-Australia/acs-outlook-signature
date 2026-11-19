@@ -79,7 +79,8 @@ export const SIGNATURE_CONFIG = {
       fontFamily: "Arial, Helvetica, 'Microsoft YaHei', 'PingFang SC', sans-serif",
     },
     {
-      match: ["new zealand", "auckland"],
+      // Entra "办公室"里新西兰同事填的是街道地址 "40 Airpark Drive"
+      match: ["new zealand", "auckland", "airpark"],
       company: {
         mainPhone: "+64 9 254 4900",
         address: "40 Airpark Drive, Mangere, Auckland 2022",
