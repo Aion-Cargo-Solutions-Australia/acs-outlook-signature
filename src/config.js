@@ -135,6 +135,10 @@ export const SIGNATURE_CONFIG = {
   // 解析不到再读这个扩展属性（Exchange 自定义属性 1 = extensionAttribute1）
   extensionAttribute: "extensionAttribute1",
 
+  // 签名专用职位（Exchange 自定义属性 2 = extensionAttribute2）：填了签名就显示它，
+  // 不填显示 Entra "职位"。用于签名职位要和 Teams / 通讯录里的职位不同的人
+  titleAttribute: "extensionAttribute2",
+
   /**
    * 图片模式：
    *  - "embed"：图片以内嵌附件（CID）方式插入，任何客户端都能直接显示，不会被“阻止下载图片”拦截（推荐）

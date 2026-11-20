@@ -32,6 +32,10 @@ test("normalizeProfile: graph data, ext attribute and fallbacks", () => {
   const p2 = normalizeProfile({ displayName: "A B", onPremisesExtensionAttributes: { extensionAttribute1: "x 605" } }, CFG, {});
   assert.equal(p2.phone, CFG.company.mainPhone);
   assert.equal(p2.ext, "605");
+  // 签名专用职位优先于 Entra 职位；空白不算
+  const t = { displayName: "A B", jobTitle: "Director", onPremisesExtensionAttributes: { extensionAttribute2: " Account Manager " } };
+  assert.equal(normalizeProfile(t, CFG, {}).jobTitle, "Account Manager");
+  assert.equal(normalizeProfile({ ...t, onPremisesExtensionAttributes: { extensionAttribute2: "  " } }, CFG, {}).jobTitle, "Director");
   const p3 = normalizeProfile(null, CFG, { displayName: "Fallback User", emailAddress: "f@aioncargo.com" });
   assert.equal(p3.source, "fallback");
   assert.equal(p3.displayName, "Fallback User");
