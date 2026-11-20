@@ -18,6 +18,9 @@ test("splitExtension handles common formats", () => {
   assert.deepEqual(splitExtension(""), { number: "", ext: "" });
   assert.deepEqual(splitExtension("EXT 602"), { number: "", ext: "602" });
   assert.deepEqual(splitExtension("602"), { number: "", ext: "602" });
+  assert.deepEqual(splitExtension("+61 2 9160 2300 (601)"), { number: "+61 2 9160 2300", ext: "601" });
+  assert.deepEqual(splitExtension("+61 2 9160 2300 (ext 601)"), { number: "+61 2 9160 2300", ext: "601" });
+  assert.deepEqual(splitExtension("(02) 9160 2300"), { number: "(02) 9160 2300", ext: "" });
 });
 
 test("normalizeProfile: graph data, ext attribute and fallbacks", () => {

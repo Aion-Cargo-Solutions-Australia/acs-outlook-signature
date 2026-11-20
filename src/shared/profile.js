@@ -14,8 +14,9 @@ export function splitExtension(raw) {
   // 只填了分机（如 "EXT 602" / "x602" / "602"）
   const only = String(raw).match(/^\s*(?:ext\.?|extension|x|#)?\s*(\d{1,6})\s*$/i);
   if (only) return { number: "", ext: only[1] };
-  const m = String(raw).match(/^(.*?)[\s,;]*(?:ext\.?|extension|x|#)\s*(\d{1,6})\s*$/i);
-  if (m && m[1].replace(/\D/g, "").length >= 6) return { number: m[1].trim(), ext: m[2] };
+  // 分机写在号码后面："EXT 601" / "x601" / "(601)" / "(ext 601)"
+  const m = String(raw).match(/^(.*?)[\s,;]*(?:(?:ext\.?|extension|x|#)\s*(\d{1,6})|\(\s*(?:ext\.?|extension|x|#)?\s*(\d{1,6})\s*\))\s*$/i);
+  if (m && m[1].replace(/\D/g, "").length >= 6) return { number: m[1].trim(), ext: m[2] || m[3] };
   return { number: String(raw).trim(), ext: "" };
 }
 
