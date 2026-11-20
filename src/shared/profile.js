@@ -52,9 +52,11 @@ export function normalizeProfile(me, cfg, fallback) {
     const v = me.onPremisesExtensionAttributes[cfg.extensionAttribute];
     if (v) ext = String(v).replace(/^\s*(ext\.?|x)\s*/i, "").trim();
   }
+  // 签名专用职位：填了就用它，不填用 Entra 职位（见 config.js titleAttribute）
+  const sigTitle = me.onPremisesExtensionAttributes && cfg.titleAttribute && me.onPremisesExtensionAttributes[cfg.titleAttribute];
   return {
     displayName: me.displayName || fallback.displayName || "",
-    jobTitle: me.jobTitle || "",
+    jobTitle: String(sigTitle || "").trim() || me.jobTitle || "",
     department: me.department || "",
     email: (me.mail || fallback.emailAddress || me.userPrincipalName || "").toLowerCase(),
     // 登录账号：用来确认缓存的资料属于当前登录的人（见 office.js loadProfile）
